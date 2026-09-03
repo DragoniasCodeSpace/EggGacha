@@ -1,5 +1,8 @@
 import "dotenv/config";
 import express from "express";
+import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import { config } from "./config/config.js";
 
@@ -20,8 +23,21 @@ import {
     getUserCollection
 } from "./database/collections.js";
 
+import {
+    startOverlayServer,
+    sendEggRollToOverlay
+} from "./overlay/overlay.js";
+
 
 const app = express();
+const server = http.createServer(app);
+
+startOverlayServer(server);
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 let eventSubSocket = null;
 let eggRewardId = null;
@@ -40,7 +56,7 @@ registerAuthRoutes(app, async (twitchSession) => {
         `Twitch connected: ${twitchSession.broadcaster.displayName}`
     );
 
-    // Find EggGacha's reward or create it if it doesn't exist.
+    // Find EggGacha's reward or create it.
     const eggReward = await getOrCreateEggReward(
         twitchSession
     );
@@ -51,10 +67,12 @@ registerAuthRoutes(app, async (twitchSession) => {
         `Listening for EggGacha reward: ${eggReward.title}`
     );
 
+
     // Prevent multiple EventSub connections.
     if (eventSubSocket) {
         eventSubSocket.close();
     }
+
 
     eventSubSocket = connectToEventSub(
         twitchSession,
@@ -63,7 +81,7 @@ registerAuthRoutes(app, async (twitchSession) => {
 });
 
 
-// Handle Channel Point redemption
+// Handle Twitch Channel Point redemption
 async function handleRedemption(event) {
 
     // Ignore every reward except EggGacha's reward.
@@ -71,20 +89,24 @@ async function handleRedemption(event) {
         return;
     }
 
+
     // Roll an egg.
     const egg = rollEgg();
 
-    // Find the viewer or create them.
+
+    // Find or create the viewer.
     const user = getOrCreateUser(
         event.user_id,
         event.user_name
     );
 
-    // Add the rolled egg to their collection.
+
+    // Add the egg to their collection.
     const collectionEntry = addEggToCollection(
         user.id,
         egg.id
     );
+
 
     console.log("");
     console.log("🥚 Egg rolled!");
@@ -94,10 +116,29 @@ async function handleRedemption(event) {
     console.log("Rarity:", egg.rarity);
     console.log("Owned:", collectionEntry.quantity);
     console.log("");
+
+
+    // Send the result to the OBS/browser overlay.
+    sendEggRollToOverlay(
+        user,
+        egg
+    );
 }
 
 
-// Collection page
+// OBS overlay page
+app.get("/overlay", (req, res) => {
+    res.sendFile(
+        path.join(
+            __dirname,
+            "overlay",
+            "overlay.html"
+        )
+    );
+});
+
+
+// Viewer collection page
 app.get(
     "/collection/:twitchUserId",
     (req, res) => {
@@ -105,9 +146,11 @@ app.get(
         const twitchUserId =
             req.params.twitchUserId;
 
+
         const user = getUserByTwitchId(
             twitchUserId
         );
+
 
         if (!user) {
             return res
@@ -115,9 +158,11 @@ app.get(
                 .send("Viewer not found.");
         }
 
+
         const collection = getUserCollection(
             user.id
         );
+
 
         const totalEggs = collection.reduce(
             (total, entry) =>
@@ -125,7 +170,10 @@ app.get(
             0
         );
 
-        const uniqueEggs = collection.length;
+
+        const uniqueEggs =
+            collection.length;
+
 
         const eggsHtml = collection
             .filter(entry => entry.egg)
@@ -141,6 +189,7 @@ app.get(
                 </li>
             `)
             .join("");
+
 
         res.send(`
             <!DOCTYPE html>
@@ -160,10 +209,14 @@ app.get(
                         🥚 ${user.display_name}'s Egg Collection
                     </h1>
 
+
                     <p>
                         Total Eggs:
-                        <strong>${totalEggs}</strong>
+                        <strong>
+                            ${totalEggs}
+                        </strong>
                     </p>
+
 
                     <p>
                         Unique Eggs:
@@ -172,7 +225,9 @@ app.get(
                         </strong>
                     </p>
 
+
                     <hr>
+
 
                     <ul>
                         ${eggsHtml}
@@ -186,12 +241,16 @@ app.get(
 
 
 // Start EggGacha
-app.listen(
+server.listen(
     config.server.port,
     () => {
 
         console.log(
             `EggGacha running on http://localhost:${config.server.port}`
+        );
+
+        console.log(
+            `Overlay: http://localhost:${config.server.port}/overlay`
         );
 
         console.log(

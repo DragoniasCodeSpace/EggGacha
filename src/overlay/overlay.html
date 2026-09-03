@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <title>EggGacha Overlay</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+            font-family: Arial, sans-serif;
+        }
+
+        #egg-roll {
+            display: none;
+
+            position: absolute;
+
+            left: 50%;
+            top: 50%;
+
+            transform: translate(-50%, -50%);
+
+            text-align: center;
+
+            padding: 30px 50px;
+
+            background: rgba(0, 0, 0, 0.75);
+
+            border-radius: 20px;
+
+            color: white;
+        }
+
+        #egg {
+            font-size: 100px;
+        }
+
+        #username {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        #egg-name {
+            font-size: 40px;
+            font-weight: bold;
+        }
+
+        #rarity {
+            margin-top: 10px;
+
+            font-size: 24px;
+
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="egg-roll">
+
+    <div id="username"></div>
+
+    <div id="egg">
+        🥚
+    </div>
+
+    <div id="egg-name"></div>
+
+    <div id="rarity"></div>
+
+</div>
+
+
+<script>
+    const rollElement =
+        document.getElementById("egg-roll");
+
+    const usernameElement =
+        document.getElementById("username");
+
+    const eggNameElement =
+        document.getElementById("egg-name");
+
+    const rarityElement =
+        document.getElementById("rarity");
+
+
+    const protocol =
+        window.location.protocol === "https:"
+            ? "wss"
+            : "ws";
+
+    const socket = new WebSocket(
+        `${protocol}://${window.location.host}/overlay-ws`
+    );
+
+
+    socket.addEventListener("open", () => {
+        console.log(
+            "Connected to EggGacha overlay server"
+        );
+    });
+
+
+    socket.addEventListener(
+        "message",
+        (event) => {
+
+            const message =
+                JSON.parse(event.data);
+
+            if (message.type !== "egg_roll") {
+                return;
+            }
+
+            showEggRoll(message);
+        }
+    );
+
+
+    function showEggRoll(message) {
+
+        usernameElement.textContent =
+            `${message.user.displayName} rolled`;
+
+        eggNameElement.textContent =
+            message.egg.name;
+
+        rarityElement.textContent =
+            message.egg.rarity;
+
+        rollElement.style.display =
+            "block";
+
+
+        setTimeout(() => {
+            rollElement.style.display =
+                "none";
+        }, 5000);
+    }
+</script>
+
+</body>
+</html>
