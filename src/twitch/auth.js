@@ -12,7 +12,7 @@ export function registerAuthRoutes(app, onAuthenticated) {
 
     app.get("/auth/twitch", (req, res) => {
         const scopes = [
-            "channel:read:redemptions"
+            "channel:manage:redemptions"
         ];
 
         const authUrl =
