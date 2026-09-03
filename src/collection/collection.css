@@ -1,0 +1,1922 @@
+/* ==========================================================
+   Base
+   ========================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    color: white;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            #292653 0%,
+            #151426 35%,
+            #0c0c15 70%,
+            #07070c 100%
+        );
+
+    background-attachment: fixed;
+}
+
+
+/* ==========================================================
+   Page
+   ========================================================== */
+
+.page {
+    width:
+        min(
+            1400px,
+            calc(100% - 40px)
+        );
+
+    margin:
+        0
+        auto;
+
+    padding:
+        50px
+        0
+        100px;
+}
+
+
+/* ==========================================================
+   Page header
+   ========================================================== */
+
+.page-header {
+    margin-bottom: 40px;
+
+    text-align: center;
+}
+
+.page-logo {
+    margin-bottom: 10px;
+
+    font-size: 54px;
+
+    filter:
+        drop-shadow(
+            0
+            5px
+            10px
+            rgba(
+                0,
+                0,
+                0,
+                0.6
+            )
+        );
+}
+
+h1 {
+    margin:
+        0
+        0
+        10px;
+
+    font-size: 44px;
+}
+
+.subtitle {
+    color: #aaaac0;
+
+    font-size: 18px;
+}
+
+
+/* ==========================================================
+   Statistics
+   ========================================================== */
+
+.stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            1fr
+        );
+
+    gap: 15px;
+
+    max-width: 750px;
+
+    margin:
+        0
+        auto
+        30px;
+}
+
+.stat {
+    padding: 18px;
+
+    text-align: center;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.1
+        );
+
+    border-radius: 14px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.05
+        );
+
+    box-shadow:
+        0
+        10px
+        30px
+        rgba(
+            0,
+            0,
+            0,
+            0.15
+        );
+}
+
+.stat-value {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.stat-label {
+    color: #aaaac0;
+
+    font-size: 14px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+}
+
+
+/* ==========================================================
+   Overall progress
+   ========================================================== */
+
+.progress-container {
+    max-width: 750px;
+
+    margin:
+        0
+        auto
+        65px;
+}
+
+.progress-info {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    margin-bottom: 8px;
+
+    color: #c7c7d9;
+
+    font-size: 14px;
+}
+
+.progress-bar {
+    height: 14px;
+
+    overflow: hidden;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+}
+
+.progress {
+    width: 0%;
+    height: 100%;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #765cff,
+            #b75cff,
+            #f16cff
+        );
+
+    box-shadow:
+        0
+        0
+        15px
+        rgba(
+            183,
+            92,
+            255,
+            0.55
+        );
+
+    transition:
+        width
+        0.5s
+        ease;
+}
+
+
+/* ==========================================================
+   Rarity sections
+   ========================================================== */
+
+.rarity-sections {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 65px;
+}
+
+.rarity-section {
+    position: relative;
+}
+
+
+/* ==========================================================
+   Rarity banner base
+   ========================================================== */
+
+.rarity-header {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    min-height: 68px;
+
+    margin-bottom: 22px;
+
+    padding:
+        15px
+        22px;
+
+    overflow: hidden;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.12
+        );
+
+    border-radius: 14px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.04
+        );
+}
+
+
+/*
+ * Small highlight across every banner.
+ */
+
+.rarity-header::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 1px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.25
+        );
+}
+
+
+/*
+ * Atmospheric light used more strongly
+ * on higher rarities.
+ */
+
+.rarity-header::after {
+    content: "";
+
+    position: absolute;
+
+    top: 50%;
+    right: -100px;
+
+    width: 300px;
+    height: 150px;
+
+    border-radius: 50%;
+
+    opacity: 0;
+
+    transform:
+        translateY(-50%);
+
+    pointer-events: none;
+
+    filter:
+        blur(50px);
+}
+
+
+.rarity-title {
+    position: relative;
+
+    z-index: 2;
+
+    margin: 0;
+
+    font-size: 25px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 3px;
+}
+
+
+.rarity-progress {
+    position: relative;
+
+    z-index: 2;
+
+    min-width: 70px;
+
+    padding:
+        7px
+        13px;
+
+    text-align: center;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.1
+        );
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            0,
+            0,
+            0,
+            0.25
+        );
+
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+/* ==========================================================
+   COMMON
+   Simple grey banner
+   ========================================================== */
+
+.rarity-common .rarity-header {
+    border-color:
+        rgba(
+            200,
+            200,
+            200,
+            0.25
+        );
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                160,
+                160,
+                160,
+                0.12
+            ),
+            rgba(
+                255,
+                255,
+                255,
+                0.025
+            )
+        );
+}
+
+.rarity-common .rarity-title {
+    color: #dddddd;
+}
+
+
+/* ==========================================================
+   UNCOMMON
+   Slight green glow
+   ========================================================== */
+
+.rarity-uncommon .rarity-header {
+    border-color:
+        rgba(
+            70,
+            220,
+            100,
+            0.35
+        );
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                70,
+                220,
+                100,
+                0.16
+            ),
+            rgba(
+                70,
+                220,
+                100,
+                0.03
+            )
+        );
+}
+
+.rarity-uncommon .rarity-title {
+    color: #62ff7d;
+}
+
+.rarity-uncommon .rarity-header::after {
+    opacity: 0.15;
+
+    background: #62ff7d;
+}
+
+
+/* ==========================================================
+   RARE
+   Blue glow
+   ========================================================== */
+
+.rarity-rare .rarity-header {
+    border-color:
+        rgba(
+            70,
+            130,
+            255,
+            0.45
+        );
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                70,
+                130,
+                255,
+                0.22
+            ),
+            rgba(
+                70,
+                130,
+                255,
+                0.04
+            )
+        );
+
+    box-shadow:
+        0
+        5px
+        20px
+        rgba(
+            70,
+            130,
+            255,
+            0.08
+        );
+}
+
+.rarity-rare .rarity-title {
+    color: #629cff;
+
+    text-shadow:
+        0
+        0
+        10px
+        rgba(
+            98,
+            156,
+            255,
+            0.3
+        );
+}
+
+.rarity-rare .rarity-header::after {
+    opacity: 0.25;
+
+    background: #629cff;
+}
+
+
+/* ==========================================================
+   EPIC
+   Purple illuminated banner
+   ========================================================== */
+
+.rarity-epic .rarity-header {
+    border-color:
+        rgba(
+            180,
+            70,
+            255,
+            0.55
+        );
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                180,
+                70,
+                255,
+                0.27
+            ),
+            rgba(
+                110,
+                50,
+                170,
+                0.08
+            ),
+            rgba(
+                180,
+                70,
+                255,
+                0.03
+            )
+        );
+
+    box-shadow:
+        0
+        6px
+        25px
+        rgba(
+            180,
+            70,
+            255,
+            0.12
+        );
+}
+
+.rarity-epic .rarity-title {
+    color: #c76dff;
+
+    text-shadow:
+        0
+        0
+        12px
+        rgba(
+            199,
+            109,
+            255,
+            0.45
+        );
+}
+
+.rarity-epic .rarity-header::after {
+    opacity: 0.35;
+
+    background: #c76dff;
+}
+
+
+/* ==========================================================
+   LEGENDARY
+   Gold starts becoming substantially more dramatic
+   ========================================================== */
+
+.rarity-legendary .rarity-header {
+    border-color:
+        rgba(
+            255,
+            175,
+            30,
+            0.7
+        );
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(
+                255,
+                175,
+                30,
+                0.32
+            ),
+            rgba(
+                130,
+                70,
+                10,
+                0.13
+            ),
+            rgba(
+                255,
+                175,
+                30,
+                0.04
+            )
+        );
+
+    box-shadow:
+        0
+        8px
+        30px
+        rgba(
+            255,
+            175,
+            30,
+            0.17
+        ),
+        inset
+        0
+        0
+        25px
+        rgba(
+            255,
+            175,
+            30,
+            0.06
+        );
+}
+
+.rarity-legendary .rarity-title {
+    color: #ffbd42;
+
+    text-shadow:
+        0
+        0
+        10px
+        rgba(
+            255,
+            181,
+            46,
+            0.7
+        );
+}
+
+.rarity-legendary .rarity-header::after {
+    opacity: 0.5;
+
+    background: #ffb52e;
+}
+
+
+/* ==========================================================
+   EXOTIC
+   Pink / magenta energy
+   ========================================================== */
+
+.rarity-exotic .rarity-header {
+    border-color:
+        rgba(
+            255,
+            60,
+            150,
+            0.75
+        );
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(
+                255,
+                60,
+                150,
+                0.34
+            ),
+            rgba(
+                130,
+                20,
+                90,
+                0.14
+            ),
+            rgba(
+                255,
+                60,
+                150,
+                0.04
+            )
+        );
+
+    box-shadow:
+        0
+        8px
+        32px
+        rgba(
+            255,
+            60,
+            150,
+            0.18
+        ),
+        inset
+        0
+        0
+        25px
+        rgba(
+            255,
+            60,
+            150,
+            0.07
+        );
+}
+
+.rarity-exotic .rarity-title {
+    color: #ff6ab3;
+
+    text-shadow:
+        0
+        0
+        12px
+        rgba(
+            255,
+            60,
+            150,
+            0.75
+        );
+}
+
+.rarity-exotic .rarity-header::after {
+    opacity: 0.55;
+
+    background: #ff3c96;
+}
+
+
+/* ==========================================================
+   MYTHIC
+   Animated magical purple energy
+   ========================================================== */
+
+.rarity-mythic .rarity-header {
+    border-color:
+        rgba(
+            230,
+            40,
+            255,
+            0.85
+        );
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(
+                230,
+                40,
+                255,
+                0.38
+            ),
+            rgba(
+                110,
+                30,
+                180,
+                0.18
+            ),
+            rgba(
+                80,
+                30,
+                130,
+                0.08
+            )
+        );
+
+    box-shadow:
+        0
+        0
+        30px
+        rgba(
+            230,
+            40,
+            255,
+            0.22
+        ),
+        inset
+        0
+        0
+        30px
+        rgba(
+            230,
+            40,
+            255,
+            0.09
+        );
+
+    animation:
+        mythicBanner
+        3s
+        ease-in-out
+        infinite;
+}
+
+.rarity-mythic .rarity-title {
+    color: #f16cff;
+
+    text-shadow:
+        0
+        0
+        8px
+        #e628ff,
+        0
+        0
+        18px
+        rgba(
+            230,
+            40,
+            255,
+            0.65
+        );
+}
+
+.rarity-mythic .rarity-header::after {
+    opacity: 0.7;
+
+    background: #e628ff;
+
+    animation:
+        energyMove
+        4s
+        ease-in-out
+        infinite;
+}
+
+
+/* ==========================================================
+   ANCIENT
+   Bright golden relic-style banner
+   ========================================================== */
+
+.rarity-ancient .rarity-header {
+    min-height: 74px;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            220,
+            80,
+            0.95
+        );
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(
+                255,
+                215,
+                60,
+                0.4
+            ),
+            rgba(
+                150,
+                100,
+                10,
+                0.18
+            ),
+            rgba(
+                255,
+                220,
+                80,
+                0.07
+            )
+        );
+
+    box-shadow:
+        0
+        0
+        30px
+        rgba(
+            255,
+            220,
+            80,
+            0.28
+        ),
+        inset
+        0
+        0
+        35px
+        rgba(
+            255,
+            220,
+            80,
+            0.11
+        );
+
+    animation:
+        ancientBanner
+        2.5s
+        ease-in-out
+        infinite;
+}
+
+.rarity-ancient .rarity-title {
+    font-size: 27px;
+
+    color: #ffe86b;
+
+    text-shadow:
+        0
+        0
+        8px
+        #ffc933,
+        0
+        0
+        20px
+        rgba(
+            255,
+            220,
+            80,
+            0.8
+        );
+}
+
+.rarity-ancient .rarity-header::after {
+    opacity: 0.85;
+
+    background: #ffe86b;
+
+    animation:
+        energyMove
+        3s
+        ease-in-out
+        infinite;
+}
+
+
+/* ==========================================================
+   ETERNAL
+   Highest rarity
+
+   Intentionally much more dramatic.
+   ========================================================== */
+
+.rarity-eternal .rarity-header {
+    min-height: 82px;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.95
+        );
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(
+                125,
+                100,
+                255,
+                0.38
+            ),
+            rgba(
+                255,
+                90,
+                210,
+                0.25
+            ),
+            rgba(
+                100,
+                160,
+                255,
+                0.23
+            ),
+            rgba(
+                255,
+                255,
+                255,
+                0.12
+            )
+        );
+
+    background-size:
+        300%
+        300%;
+
+    box-shadow:
+        0
+        0
+        25px
+        rgba(
+            180,
+            120,
+            255,
+            0.4
+        ),
+        0
+        0
+        50px
+        rgba(
+            100,
+            140,
+            255,
+            0.2
+        ),
+        inset
+        0
+        0
+        35px
+        rgba(
+            255,
+            255,
+            255,
+            0.13
+        );
+
+    animation:
+        eternalBanner
+        5s
+        ease
+        infinite;
+}
+
+.rarity-eternal .rarity-title {
+    font-size: 30px;
+
+    color: white;
+
+    letter-spacing: 5px;
+
+    text-shadow:
+        0
+        0
+        7px
+        white,
+        0
+        0
+        15px
+        #b684ff,
+        0
+        0
+        30px
+        #668cff;
+
+    animation:
+        eternalTitle
+        1.8s
+        ease-in-out
+        infinite
+        alternate;
+}
+
+.rarity-eternal .rarity-progress {
+    border-color:
+        rgba(
+            255,
+            255,
+            255,
+            0.45
+        );
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.1
+        );
+
+    box-shadow:
+        0
+        0
+        15px
+        rgba(
+            190,
+            130,
+            255,
+            0.35
+        );
+}
+
+.rarity-eternal .rarity-header::after {
+    width: 450px;
+    height: 200px;
+
+    opacity: 0.9;
+
+    background:
+        linear-gradient(
+            90deg,
+            #b684ff,
+            #ff73da,
+            #668cff
+        );
+
+    animation:
+        eternalEnergy
+        3s
+        ease-in-out
+        infinite;
+}
+
+
+/* ==========================================================
+   Egg grid
+   ========================================================== */
+
+.egg-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(
+                190px,
+                220px
+            )
+        );
+
+    gap: 20px;
+}
+
+
+/* ==========================================================
+   Egg cards
+   ========================================================== */
+
+.egg-card {
+    position: relative;
+
+    overflow: hidden;
+
+    padding:
+        18px
+        15px
+        20px;
+
+    text-align: center;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.1
+        );
+
+    border-radius: 18px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.04
+        );
+
+    transition:
+        transform
+        0.2s
+        ease,
+        box-shadow
+        0.2s
+        ease,
+        border-color
+        0.2s
+        ease;
+}
+
+.unlocked:hover {
+    transform:
+        translateY(-6px)
+        scale(1.02);
+
+    box-shadow:
+        0
+        14px
+        30px
+        rgba(
+            0,
+            0,
+            0,
+            0.4
+        );
+}
+
+
+/* ==========================================================
+   Egg image
+   ========================================================== */
+
+.egg-image-container {
+    position: relative;
+
+    height: 180px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.egg-image {
+    width: 160px;
+    height: 160px;
+
+    object-fit: contain;
+
+    filter:
+        drop-shadow(
+            0
+            8px
+            12px
+            rgba(
+                0,
+                0,
+                0,
+                0.5
+            )
+        );
+
+    transition:
+        transform
+        0.2s
+        ease;
+}
+
+.unlocked:hover .egg-image {
+    transform:
+        scale(1.05);
+}
+
+
+/* ==========================================================
+   Quantity
+   ========================================================== */
+
+.quantity {
+    position: absolute;
+
+    right: 5px;
+    bottom: 5px;
+
+    padding:
+        5px
+        9px;
+
+    border:
+        1px
+        solid
+        rgba(
+            255,
+            255,
+            255,
+            0.12
+        );
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            0,
+            0,
+            0,
+            0.72
+        );
+
+    font-weight: bold;
+}
+
+
+/* ==========================================================
+   Egg text
+   ========================================================== */
+
+.egg-name {
+    margin-top: 10px;
+
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.egg-rarity {
+    margin-top: 6px;
+
+    font-size: 13px;
+    font-weight: bold;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+}
+
+
+/* ==========================================================
+   Locked eggs
+   ========================================================== */
+
+.locked {
+    opacity: 0.5;
+}
+
+.locked-image {
+    filter:
+        brightness(0)
+        opacity(0.55);
+}
+
+.lock {
+    position: absolute;
+
+    font-size: 34px;
+
+    filter:
+        drop-shadow(
+            0
+            3px
+            5px
+            black
+        );
+}
+
+.locked .egg-rarity {
+    color: #888;
+}
+
+
+/* ==========================================================
+   Unlocked card rarity styling
+   ========================================================== */
+
+.common {
+    border-color:
+        rgba(
+            200,
+            200,
+            200,
+            0.35
+        );
+}
+
+.common .egg-rarity {
+    color: #dddddd;
+}
+
+
+.uncommon {
+    border-color:
+        rgba(
+            70,
+            220,
+            100,
+            0.45
+        );
+}
+
+.uncommon .egg-rarity {
+    color: #62ff7d;
+}
+
+
+.rare {
+    border-color:
+        rgba(
+            70,
+            130,
+            255,
+            0.55
+        );
+}
+
+.rare .egg-rarity {
+    color: #629cff;
+}
+
+
+.epic {
+    border-color:
+        rgba(
+            180,
+            70,
+            255,
+            0.6
+        );
+}
+
+.epic .egg-rarity {
+    color: #c76dff;
+}
+
+
+.legendary {
+    border-color:
+        rgba(
+            255,
+            175,
+            30,
+            0.7
+        );
+
+    box-shadow:
+        inset
+        0
+        0
+        25px
+        rgba(
+            255,
+            175,
+            30,
+            0.06
+        );
+}
+
+.legendary .egg-rarity {
+    color: #ffb52e;
+}
+
+
+.exotic {
+    border-color:
+        rgba(
+            255,
+            60,
+            150,
+            0.7
+        );
+}
+
+.exotic .egg-rarity {
+    color: #ff59b0;
+}
+
+
+.mythic {
+    border-color:
+        rgba(
+            230,
+            40,
+            255,
+            0.75
+        );
+
+    box-shadow:
+        inset
+        0
+        0
+        30px
+        rgba(
+            230,
+            40,
+            255,
+            0.08
+        );
+}
+
+.mythic .egg-rarity {
+    color: #f16cff;
+}
+
+
+.ancient {
+    border-color:
+        rgba(
+            255,
+            220,
+            80,
+            0.8
+        );
+
+    box-shadow:
+        inset
+        0
+        0
+        30px
+        rgba(
+            255,
+            220,
+            80,
+            0.1
+        );
+}
+
+.ancient .egg-rarity {
+    color: #ffe86b;
+}
+
+
+.eternal {
+    border-color:
+        rgba(
+            255,
+            255,
+            255,
+            0.9
+        );
+
+    box-shadow:
+        0
+        0
+        25px
+        rgba(
+            190,
+            120,
+            255,
+            0.2
+        ),
+        inset
+        0
+        0
+        25px
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+}
+
+.eternal .egg-rarity {
+    color: white;
+
+    text-shadow:
+        0
+        0
+        10px
+        #b684ff;
+}
+
+
+/* ==========================================================
+   Banner animations
+   ========================================================== */
+
+@keyframes mythicBanner {
+
+    0%,
+    100% {
+        box-shadow:
+            0
+            0
+            25px
+            rgba(
+                230,
+                40,
+                255,
+                0.18
+            ),
+            inset
+            0
+            0
+            30px
+            rgba(
+                230,
+                40,
+                255,
+                0.08
+            );
+    }
+
+    50% {
+        box-shadow:
+            0
+            0
+            38px
+            rgba(
+                230,
+                40,
+                255,
+                0.35
+            ),
+            inset
+            0
+            0
+            35px
+            rgba(
+                230,
+                40,
+                255,
+                0.13
+            );
+    }
+}
+
+
+@keyframes ancientBanner {
+
+    0%,
+    100% {
+        box-shadow:
+            0
+            0
+            25px
+            rgba(
+                255,
+                220,
+                80,
+                0.22
+            ),
+            inset
+            0
+            0
+            30px
+            rgba(
+                255,
+                220,
+                80,
+                0.08
+            );
+    }
+
+    50% {
+        box-shadow:
+            0
+            0
+            45px
+            rgba(
+                255,
+                220,
+                80,
+                0.42
+            ),
+            inset
+            0
+            0
+            40px
+            rgba(
+                255,
+                220,
+                80,
+                0.15
+            );
+    }
+}
+
+
+@keyframes energyMove {
+
+    0%,
+    100% {
+        transform:
+            translate(
+                0,
+                -50%
+            )
+            scale(1);
+    }
+
+    50% {
+        transform:
+            translate(
+                -180px,
+                -50%
+            )
+            scale(1.3);
+    }
+}
+
+
+@keyframes eternalBanner {
+
+    0% {
+        background-position:
+            0%
+            50%;
+    }
+
+    50% {
+        background-position:
+            100%
+            50%;
+    }
+
+    100% {
+        background-position:
+            0%
+            50%;
+    }
+}
+
+
+@keyframes eternalTitle {
+
+    from {
+        text-shadow:
+            0
+            0
+            7px
+            white,
+            0
+            0
+            15px
+            #b684ff,
+            0
+            0
+            25px
+            #668cff;
+    }
+
+    to {
+        text-shadow:
+            0
+            0
+            12px
+            white,
+            0
+            0
+            25px
+            #ff73da,
+            0
+            0
+            45px
+            #668cff;
+    }
+}
+
+
+@keyframes eternalEnergy {
+
+    0%,
+    100% {
+        transform:
+            translate(
+                0,
+                -50%
+            )
+            scale(1);
+    }
+
+    50% {
+        transform:
+            translate(
+                -250px,
+                -50%
+            )
+            scale(1.4);
+    }
+}
+
+
+/* ==========================================================
+   Mobile
+   ========================================================== */
+
+@media (
+    max-width: 700px
+) {
+
+    .page {
+        width:
+            calc(
+                100% - 24px
+            );
+
+        padding-top: 30px;
+    }
+
+
+    .stats {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    h1 {
+        font-size: 32px;
+    }
+
+
+    .page-logo {
+        font-size: 44px;
+    }
+
+
+    .rarity-sections {
+        gap: 45px;
+    }
+
+
+    .rarity-header {
+        min-height: 60px;
+
+        padding:
+            12px
+            15px;
+    }
+
+
+    .rarity-title {
+        font-size: 20px;
+
+        letter-spacing: 2px;
+    }
+
+
+    .rarity-eternal .rarity-title {
+        font-size: 21px;
+
+        letter-spacing: 3px;
+    }
+
+
+    .egg-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+        gap: 12px;
+    }
+
+
+    .egg-image-container {
+        height: 140px;
+    }
+
+
+    .egg-image {
+        width: 125px;
+        height: 125px;
+    }
+
+
+    .egg-card {
+        padding:
+            12px
+            8px
+            16px;
+    }
+
+
+    .egg-name {
+        font-size: 15px;
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "egggacha",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DragoniasCodeSpace/EggGacha.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/DragoniasCodeSpace/EggGacha/issues"
+  },
+  "homepage": "https://github.com/DragoniasCodeSpace/EggGacha#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "ws": "^8.21.3"
+  }
+}
