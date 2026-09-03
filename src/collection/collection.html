@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>EggGacha Collection</title>
+
+    <link
+        rel="stylesheet"
+        href="/collection-files/collection.css"
+    >
+</head>
+
+<body>
+
+<main class="page">
+
+    <!-- =====================================================
+         Page header
+         ===================================================== -->
+
+    <header class="page-header">
+
+        <div class="page-logo">
+            🥚
+        </div>
+
+        <h1 id="title">
+            Egg Collection
+        </h1>
+
+        <div class="subtitle">
+            EggGacha Collection
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         Collection statistics
+         ===================================================== -->
+
+    <section class="stats">
+
+        <div class="stat">
+
+            <span
+                id="total-eggs"
+                class="stat-value"
+            >
+                0
+            </span>
+
+            <span class="stat-label">
+                Total Eggs
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <span
+                id="unique-eggs"
+                class="stat-value"
+            >
+                0 / 0
+            </span>
+
+            <span class="stat-label">
+                Discovered
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <span
+                id="completion"
+                class="stat-value"
+            >
+                0%
+            </span>
+
+            <span class="stat-label">
+                Completion
+            </span>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         Overall collection progress
+         ===================================================== -->
+
+    <section class="progress-container">
+
+        <div class="progress-info">
+
+            <span>
+                Collection Progress
+            </span>
+
+            <span id="progress-text">
+                0 / 0
+            </span>
+
+        </div>
+
+
+        <div class="progress-bar">
+
+            <div
+                id="progress"
+                class="progress"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         Rarity sections
+
+         collection.js dynamically inserts:
+         Common
+         Uncommon
+         Rare
+         Epic
+         Legendary
+         Exotic
+         Mythic
+         Ancient
+         Eternal
+         ===================================================== -->
+
+    <section
+        id="rarity-sections"
+        class="rarity-sections"
+    ></section>
+
+</main>
+
+
+<script src="/collection-files/collection.js"></script>
+
+</body>
+
+</html>

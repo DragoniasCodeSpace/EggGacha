@@ -25,7 +25,11 @@ export function startOverlayServer(server) {
     return wss;
 }
 
-export function sendEggRollToOverlay(user, egg) {
+export function sendEggRollToOverlay(
+    user,
+    egg,
+    quantity
+) {
     const message = JSON.stringify({
         type: "egg_roll",
 
@@ -37,7 +41,13 @@ export function sendEggRollToOverlay(user, egg) {
         egg: {
             id: egg.id,
             name: egg.name,
-            rarity: egg.rarity
+            rarity: egg.rarity,
+            image: egg.image ?? null
+        },
+
+        collection: {
+            quantity,
+            isNew: quantity === 1
         }
     });
 

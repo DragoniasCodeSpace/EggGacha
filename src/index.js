@@ -29,19 +29,76 @@ import {
 } from "./overlay/overlay.js";
 
 
+// ======================================================
+// App setup
+// ======================================================
+
 const app = express();
 const server = http.createServer(app);
-
-startOverlayServer(server);
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
+// ======================================================
+// Static files
+// ======================================================
+
+// Egg images:
+//
+// public/assets/eggs/STORMHEART.png
+//
+// becomes:
+//
+// http://localhost:3000/assets/eggs/STORMHEART.png
+
+app.use(
+    "/assets",
+    express.static(
+        path.join(
+            __dirname,
+            "..",
+            "public",
+            "assets"
+        )
+    )
+);
+
+
+// Collection frontend files:
+//
+// src/collection/collection.css
+// src/collection/collection.js
+
+app.use(
+    "/collection-files",
+    express.static(
+        path.join(
+            __dirname,
+            "collection"
+        )
+    )
+);
+
+
+// ======================================================
+// OBS overlay WebSocket
+// ======================================================
+
+startOverlayServer(server);
+
+
+// ======================================================
+// App state
+// ======================================================
+
 let eventSubSocket = null;
 let eggRewardId = null;
 
+
+// ======================================================
+// Startup message
+// ======================================================
 
 console.log("");
 console.log("=======================");
@@ -50,197 +107,307 @@ console.log("=======================");
 console.log("");
 
 
+// ======================================================
 // Twitch authentication
-registerAuthRoutes(app, async (twitchSession) => {
-    console.log(
-        `Twitch connected: ${twitchSession.broadcaster.displayName}`
-    );
+// ======================================================
 
-    // Find EggGacha's reward or create it.
-    const eggReward = await getOrCreateEggReward(
-        twitchSession
-    );
+registerAuthRoutes(
+    app,
+    async (twitchSession) => {
 
-    eggRewardId = eggReward.id;
-
-    console.log(
-        `Listening for EggGacha reward: ${eggReward.title}`
-    );
+        console.log(
+            `Twitch connected: ${twitchSession.broadcaster.displayName}`
+        );
 
 
-    // Prevent multiple EventSub connections.
-    if (eventSubSocket) {
-        eventSubSocket.close();
+        // Get the EggGacha reward,
+        // or create it if it does not exist.
+        const eggReward =
+            await getOrCreateEggReward(
+                twitchSession
+            );
+
+
+        eggRewardId =
+            eggReward.id;
+
+
+        console.log(
+            `Listening for EggGacha reward: ${eggReward.title}`
+        );
+
+
+        // Prevent multiple EventSub sockets
+        // from running at the same time.
+        if (eventSubSocket) {
+            eventSubSocket.close();
+        }
+
+
+        eventSubSocket =
+            connectToEventSub(
+                twitchSession,
+                handleRedemption
+            );
     }
+);
 
 
-    eventSubSocket = connectToEventSub(
-        twitchSession,
-        handleRedemption
-    );
-});
+// ======================================================
+// Twitch Channel Point redemption
+// ======================================================
 
-
-// Handle Twitch Channel Point redemption
 async function handleRedemption(event) {
 
-    // Ignore every reward except EggGacha's reward.
-    if (event.reward.id !== eggRewardId) {
+    // Ignore every reward except
+    // EggGacha's own reward.
+    if (
+        event.reward.id !==
+        eggRewardId
+    ) {
         return;
     }
 
 
-    // Roll an egg.
-    const egg = rollEgg();
+    // Roll rarity + egg.
+    const egg =
+        rollEgg();
 
 
-    // Find or create the viewer.
-    const user = getOrCreateUser(
-        event.user_id,
-        event.user_name
-    );
+    // Find viewer or create them
+    // if this is their first roll.
+    const user =
+        getOrCreateUser(
+            event.user_id,
+            event.user_name
+        );
 
 
     // Add the egg to their collection.
-    const collectionEntry = addEggToCollection(
-        user.id,
-        egg.id
-    );
+    const collectionEntry =
+        addEggToCollection(
+            user.id,
+            egg.id
+        );
 
 
     console.log("");
     console.log("🥚 Egg rolled!");
-    console.log("Viewer:", user.display_name);
-    console.log("Viewer ID:", event.user_id);
-    console.log("Egg:", egg.name);
-    console.log("Rarity:", egg.rarity);
-    console.log("Owned:", collectionEntry.quantity);
+    console.log(
+        "Viewer:",
+        user.display_name
+    );
+
+    console.log(
+        "Viewer ID:",
+        event.user_id
+    );
+
+    console.log(
+        "Egg:",
+        egg.name
+    );
+
+    console.log(
+        "Rarity:",
+        egg.rarity
+    );
+
+    console.log(
+        "Owned:",
+        collectionEntry.quantity
+    );
+
     console.log("");
 
 
-    // Send the result to the OBS/browser overlay.
+    // Send the result to the OBS overlay.
     sendEggRollToOverlay(
         user,
-        egg
+        egg,
+        collectionEntry.quantity
     );
 }
 
 
+// ======================================================
 // OBS overlay page
-app.get("/overlay", (req, res) => {
-    res.sendFile(
-        path.join(
-            __dirname,
-            "overlay",
-            "overlay.html"
-        )
-    );
-});
+// ======================================================
+
+app.get(
+    "/overlay",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "overlay",
+                "overlay.html"
+            )
+        );
+    }
+);
 
 
-// Viewer collection page
+// ======================================================
+// Collection page
+// ======================================================
+
 app.get(
     "/collection/:twitchUserId",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "collection",
+                "collection.html"
+            )
+        );
+    }
+);
+
+
+// ======================================================
+// Collection API
+// ======================================================
+
+app.get(
+    "/api/collection/:twitchUserId",
     (req, res) => {
 
         const twitchUserId =
             req.params.twitchUserId;
 
 
-        const user = getUserByTwitchId(
-            twitchUserId
-        );
+        const user =
+            getUserByTwitchId(
+                twitchUserId
+            );
 
 
         if (!user) {
+
             return res
                 .status(404)
-                .send("Viewer not found.");
+                .json({
+                    error:
+                        "Viewer not found."
+                });
         }
 
 
-        const collection = getUserCollection(
-            user.id
-        );
+        const collection =
+            getUserCollection(
+                user.id
+            );
 
 
-        const totalEggs = collection.reduce(
-            (total, entry) =>
-                total + entry.quantity,
-            0
-        );
+        // Total number of eggs,
+        // including duplicates.
+        const totalEggs =
+            collection.reduce(
+                (
+                    total,
+                    entry
+                ) =>
+                    total +
+                    entry.quantity,
+                0
+            );
 
 
+        // Number of unique valid eggs
+        // the viewer owns.
         const uniqueEggs =
-            collection.length;
+            collection.filter(
+                entry =>
+                    entry.egg
+            ).length;
 
 
-        const eggsHtml = collection
-            .filter(entry => entry.egg)
-            .map(entry => `
-                <li>
-                    <strong>
-                        ${entry.egg.name}
-                    </strong>
-
-                    (${entry.egg.rarity})
-
-                    ×${entry.quantity}
-                </li>
-            `)
-            .join("");
+        const completion =
+            Math.round(
+                (
+                    uniqueEggs /
+                    eggs.length
+                ) * 100
+            );
 
 
-        res.send(`
-            <!DOCTYPE html>
+        // Build a list containing
+        // every egg in the game.
+        //
+        // This allows the frontend
+        // to also show locked eggs.
+        const collectionEggs =
+            eggs.map(
+                egg => {
 
-            <html>
-                <head>
-                    <meta charset="UTF-8">
-
-                    <title>
-                        ${user.display_name}'s Egg Collection
-                    </title>
-                </head>
-
-                <body>
-
-                    <h1>
-                        🥚 ${user.display_name}'s Egg Collection
-                    </h1>
+                    const collectionEntry =
+                        collection.find(
+                            entry =>
+                                entry.egg_id ===
+                                egg.id
+                        );
 
 
-                    <p>
-                        Total Eggs:
-                        <strong>
-                            ${totalEggs}
-                        </strong>
-                    </p>
+                    return {
+                        id:
+                            egg.id,
+
+                        name:
+                            egg.name,
+
+                        rarity:
+                            egg.rarity,
+
+                        image:
+                            egg.image,
+
+                        unlocked:
+                            Boolean(
+                                collectionEntry
+                            ),
+
+                        quantity:
+                            collectionEntry
+                                ?.quantity ?? 0
+                    };
+                }
+            );
 
 
-                    <p>
-                        Unique Eggs:
-                        <strong>
-                            ${uniqueEggs} / ${eggs.length}
-                        </strong>
-                    </p>
+        res.json({
+            user: {
+                twitchUserId:
+                    user.twitch_user_id,
 
+                displayName:
+                    user.display_name
+            },
 
-                    <hr>
+            stats: {
+                totalEggs,
+                uniqueEggs,
 
+                totalAvailable:
+                    eggs.length,
 
-                    <ul>
-                        ${eggsHtml}
-                    </ul>
+                completion
+            },
 
-                </body>
-            </html>
-        `);
+            eggs:
+                collectionEggs
+        });
     }
 );
 
 
-// Start EggGacha
+// ======================================================
+// Start server
+// ======================================================
+
 server.listen(
     config.server.port,
     () => {
@@ -253,6 +420,11 @@ server.listen(
             `Overlay: http://localhost:${config.server.port}/overlay`
         );
 
+        console.log(
+            `Assets: http://localhost:${config.server.port}/assets`
+        );
+
+        console.log("");
         console.log(
             "Login with Twitch to start."
         );

@@ -16,74 +16,506 @@
             font-family: Arial, sans-serif;
         }
 
-        #egg-roll {
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #overlay {
             display: none;
-
-            position: absolute;
-
-            left: 50%;
-            top: 50%;
-
-            transform: translate(-50%, -50%);
-
+            width: 700px;
             text-align: center;
-
-            padding: 30px 50px;
-
-            background: rgba(0, 0, 0, 0.75);
-
-            border-radius: 20px;
-
             color: white;
         }
 
-        #egg {
-            font-size: 100px;
+        #username {
+            font-size: 34px;
+            font-weight: bold;
+            margin-bottom: 20px;
+
+            text-shadow:
+                0 3px 8px rgba(0, 0, 0, 0.9);
         }
 
-        #username {
-            font-size: 30px;
-            margin-bottom: 10px;
+        #egg-container {
+            position: relative;
+
+            width: 420px;
+            height: 420px;
+
+            margin: 0 auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #placeholder-egg {
+            font-size: 180px;
+            display: none;
+            transform-origin: center bottom;
+
+            filter:
+                drop-shadow(
+                    0 10px 15px rgba(0, 0, 0, 0.55)
+                );
+        }
+
+        #egg-image {
+            display: none;
+
+            max-width: 100%;
+            max-height: 100%;
+
+            object-fit: contain;
+
+            position: relative;
+            z-index: 3;
+        }
+
+        #glow {
+            position: absolute;
+
+            width: 300px;
+            height: 300px;
+
+            border-radius: 50%;
+
+            opacity: 0;
+
+            z-index: 1;
+
+            filter: blur(55px);
+
+            transition: opacity 0.4s ease;
+        }
+
+        #flash {
+            position: absolute;
+
+            width: 300px;
+            height: 300px;
+
+            border-radius: 50%;
+
+            background: white;
+
+            opacity: 0;
+
+            z-index: 2;
+
+            pointer-events: none;
+
+            filter: blur(30px);
         }
 
         #egg-name {
-            font-size: 40px;
+            margin-top: 15px;
+
+            font-size: 44px;
             font-weight: bold;
+
+            opacity: 0;
+
+            text-shadow:
+                0 3px 8px rgba(0, 0, 0, 0.9);
         }
 
         #rarity {
-            margin-top: 10px;
+            margin-top: 8px;
 
-            font-size: 24px;
+            font-size: 28px;
+            font-weight: bold;
 
             text-transform: uppercase;
+
+            opacity: 0;
+
+            text-shadow:
+                0 3px 8px rgba(0, 0, 0, 0.9);
+        }
+
+        #collection-status {
+            margin-top: 15px;
+
+            font-size: 30px;
+            font-weight: bold;
+
+            opacity: 0;
+
+            text-shadow:
+                0 3px 8px rgba(0, 0, 0, 0.9);
+        }
+
+        /*
+         * =====================================================
+         * Rarity effects
+         * =====================================================
+         */
+
+        #overlay.common #glow {
+            background: rgba(200, 200, 200, 0.5);
+        }
+
+        #overlay.uncommon #glow {
+            background: rgba(70, 220, 100, 0.65);
+        }
+
+        #overlay.rare #glow {
+            background: rgba(70, 130, 255, 0.75);
+        }
+
+        #overlay.epic #glow {
+            background: rgba(180, 70, 255, 0.8);
+        }
+
+        #overlay.legendary #glow {
+            background: rgba(255, 175, 30, 0.9);
+        }
+
+        #overlay.exotic #glow {
+            background: rgba(255, 60, 150, 0.9);
+        }
+
+        #overlay.mythic #glow {
+            background: rgba(230, 40, 255, 1);
+        }
+
+        #overlay.ancient #glow {
+            background: rgba(255, 220, 80, 1);
+        }
+
+        #overlay.eternal #glow {
+            background: rgba(255, 255, 255, 1);
+        }
+
+
+        #overlay.common #rarity {
+            color: #dddddd;
+        }
+
+        #overlay.uncommon #rarity {
+            color: #62ff7d;
+        }
+
+        #overlay.rare #rarity {
+            color: #629cff;
+        }
+
+        #overlay.epic #rarity {
+            color: #c76dff;
+        }
+
+        #overlay.legendary #rarity {
+            color: #ffb52e;
+        }
+
+        #overlay.exotic #rarity {
+            color: #ff59b0;
+        }
+
+        #overlay.mythic #rarity {
+            color: #f16cff;
+        }
+
+        #overlay.ancient #rarity {
+            color: #ffe86b;
+        }
+
+        #overlay.eternal #rarity {
+            color: white;
+        }
+
+
+        #overlay.legendary #egg-image,
+        #overlay.exotic #egg-image,
+        #overlay.mythic #egg-image,
+        #overlay.ancient #egg-image,
+        #overlay.eternal #egg-image {
+            animation:
+                reveal 0.6s ease-out forwards,
+                floating 2.5s ease-in-out infinite 0.6s;
+        }
+
+
+        #overlay.mythic #glow,
+        #overlay.ancient #glow {
+            animation:
+                glowPulse 1.3s ease-in-out infinite;
+        }
+
+
+        #overlay.eternal #glow {
+            animation:
+                eternalGlow 0.8s ease-in-out infinite alternate;
+        }
+
+
+        #overlay.eternal #egg-image {
+            animation:
+                eternalReveal 1s ease-out forwards,
+                floating 2s ease-in-out infinite 1s;
+        }
+
+
+        #overlay.eternal #egg-name {
+            animation:
+                textReveal 0.4s ease-out forwards,
+                eternalText 1s ease-in-out infinite alternate;
+        }
+
+
+        /*
+         * =====================================================
+         * Animations
+         * =====================================================
+         */
+
+        .shake {
+            animation: shake 0.55s infinite;
+        }
+
+        .reveal {
+            animation: reveal 0.6s ease-out forwards;
+        }
+
+        .text-reveal {
+            animation: textReveal 0.4s ease-out forwards;
+        }
+
+        .flash {
+            animation: flash 0.55s ease-out;
+        }
+
+        .glow-visible {
+            opacity: 1 !important;
+        }
+
+
+        @keyframes shake {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            20% {
+                transform: rotate(-10deg);
+            }
+
+            40% {
+                transform: rotate(10deg);
+            }
+
+            60% {
+                transform: rotate(-7deg);
+            }
+
+            80% {
+                transform: rotate(7deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+
+        @keyframes reveal {
+            0% {
+                transform: scale(0.4);
+                opacity: 0;
+            }
+
+            65% {
+                transform: scale(1.15);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+
+        @keyframes eternalReveal {
+            0% {
+                transform:
+                    scale(0.1)
+                    rotate(-15deg);
+
+                opacity: 0;
+            }
+
+            40% {
+                transform:
+                    scale(1.4)
+                    rotate(8deg);
+
+                opacity: 1;
+            }
+
+            70% {
+                transform:
+                    scale(0.9)
+                    rotate(-3deg);
+            }
+
+            100% {
+                transform:
+                    scale(1)
+                    rotate(0deg);
+
+                opacity: 1;
+            }
+        }
+
+
+        @keyframes textReveal {
+            from {
+                transform: translateY(15px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+
+        @keyframes flash {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            40% {
+                opacity: 0.95;
+                transform: scale(1.25);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(2.2);
+            }
+        }
+
+
+        @keyframes floating {
+            0% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-12px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+
+        @keyframes glowPulse {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.55;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.9);
+                opacity: 0.55;
+            }
+        }
+
+
+        @keyframes eternalGlow {
+            from {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            to {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+        }
+
+
+        @keyframes eternalText {
+            from {
+                text-shadow:
+                    0 0 10px white,
+                    0 0 20px #b684ff,
+                    0 0 30px #668cff;
+            }
+
+            to {
+                text-shadow:
+                    0 0 20px white,
+                    0 0 40px #ff73da,
+                    0 0 60px #7d8cff;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div id="egg-roll">
+<div id="overlay">
 
     <div id="username"></div>
 
-    <div id="egg">
-        🥚
+    <div id="egg-container">
+
+        <div id="glow"></div>
+
+        <div id="flash"></div>
+
+        <div id="placeholder-egg">
+            🥚
+        </div>
+
+        <img
+            id="egg-image"
+            alt="Rolled egg"
+        >
+
     </div>
 
     <div id="egg-name"></div>
 
     <div id="rarity"></div>
 
+    <div id="collection-status"></div>
+
 </div>
 
 
 <script>
-    const rollElement =
-        document.getElementById("egg-roll");
+    const overlay =
+        document.getElementById("overlay");
 
     const usernameElement =
         document.getElementById("username");
+
+    const placeholderEgg =
+        document.getElementById("placeholder-egg");
+
+    const eggImage =
+        document.getElementById("egg-image");
+
+    const glowElement =
+        document.getElementById("glow");
+
+    const flashElement =
+        document.getElementById("flash");
 
     const eggNameElement =
         document.getElementById("egg-name");
@@ -91,59 +523,380 @@
     const rarityElement =
         document.getElementById("rarity");
 
+    const collectionStatusElement =
+        document.getElementById(
+            "collection-status"
+        );
+
+
+    const queue = [];
+
+    let isPlaying = false;
+
 
     const protocol =
         window.location.protocol === "https:"
             ? "wss"
             : "ws";
 
+
     const socket = new WebSocket(
         `${protocol}://${window.location.host}/overlay-ws`
     );
 
 
-    socket.addEventListener("open", () => {
-        console.log(
-            "Connected to EggGacha overlay server"
-        );
-    });
+    socket.addEventListener(
+        "open",
+        () => {
+            console.log(
+                "Connected to EggGacha overlay server"
+            );
+        }
+    );
 
 
     socket.addEventListener(
         "message",
-        (event) => {
+        event => {
 
             const message =
                 JSON.parse(event.data);
+
 
             if (message.type !== "egg_roll") {
                 return;
             }
 
-            showEggRoll(message);
+
+            queue.push(message);
+
+            processQueue();
         }
     );
 
 
-    function showEggRoll(message) {
+    async function processQueue() {
+
+        if (isPlaying) {
+            return;
+        }
+
+
+        if (queue.length === 0) {
+            return;
+        }
+
+
+        isPlaying = true;
+
+
+        const message =
+            queue.shift();
+
+
+        await playEggRoll(message);
+
+
+        isPlaying = false;
+
+
+        processQueue();
+    }
+
+
+    async function playEggRoll(message) {
+
+        resetOverlay();
+
+
+        const rarity =
+            message.egg.rarity.toLowerCase();
+
+
+        overlay.classList.add(
+            rarity
+        );
+
+
+        overlay.style.display =
+            "block";
+
+
+        usernameElement.textContent =
+            `${message.user.displayName} is rolling...`;
+
+
+        placeholderEgg.style.display =
+            "block";
+
+
+        placeholderEgg.classList.add(
+            "shake"
+        );
+
+
+        /*
+         * Higher rarities get a slightly longer
+         * suspense period.
+         */
+
+        let shakeDuration = 1800;
+
+
+        if (
+            rarity === "legendary" ||
+            rarity === "exotic"
+        ) {
+            shakeDuration = 2300;
+        }
+
+
+        if (
+            rarity === "mythic" ||
+            rarity === "ancient"
+        ) {
+            shakeDuration = 2700;
+        }
+
+
+        if (rarity === "eternal") {
+            shakeDuration = 3500;
+        }
+
+
+        await wait(shakeDuration);
+
+
+        placeholderEgg.classList.remove(
+            "shake"
+        );
+
+
+        placeholderEgg.style.display =
+            "none";
+
+
+        /*
+         * Reveal flash.
+         */
+
+        flashElement.classList.add(
+            "flash"
+        );
+
+
+        await wait(200);
+
+
+        /*
+         * Show rarity glow.
+         */
+
+        glowElement.classList.add(
+            "glow-visible"
+        );
+
+
+        /*
+         * Reveal actual image.
+         */
+
+        if (message.egg.image) {
+
+            eggImage.src =
+                message.egg.image;
+
+
+            eggImage.style.display =
+                "block";
+
+
+            if (
+                rarity !== "legendary" &&
+                rarity !== "exotic" &&
+                rarity !== "mythic" &&
+                rarity !== "ancient" &&
+                rarity !== "eternal"
+            ) {
+                eggImage.classList.add(
+                    "reveal"
+                );
+            }
+
+        } else {
+
+            placeholderEgg.style.display =
+                "block";
+
+
+            placeholderEgg.classList.add(
+                "reveal"
+            );
+        }
+
 
         usernameElement.textContent =
             `${message.user.displayName} rolled`;
 
+
         eggNameElement.textContent =
             message.egg.name;
+
 
         rarityElement.textContent =
             message.egg.rarity;
 
-        rollElement.style.display =
-            "block";
+
+        if (message.collection.isNew) {
+
+            collectionStatusElement.textContent =
+                "✨ NEW! ✨";
+
+        } else {
+
+            collectionStatusElement.textContent =
+                `Owned ×${message.collection.quantity}`;
+        }
 
 
-        setTimeout(() => {
-            rollElement.style.display =
-                "none";
-        }, 5000);
+        await wait(350);
+
+
+        eggNameElement.classList.add(
+            "text-reveal"
+        );
+
+
+        rarityElement.classList.add(
+            "text-reveal"
+        );
+
+
+        collectionStatusElement.classList.add(
+            "text-reveal"
+        );
+
+
+        /*
+         * Higher rarity eggs stay visible longer.
+         */
+
+        let displayDuration = 4000;
+
+
+        if (
+            rarity === "legendary" ||
+            rarity === "exotic"
+        ) {
+            displayDuration = 5000;
+        }
+
+
+        if (
+            rarity === "mythic" ||
+            rarity === "ancient"
+        ) {
+            displayDuration = 6000;
+        }
+
+
+        if (rarity === "eternal") {
+            displayDuration = 8000;
+        }
+
+
+        await wait(displayDuration);
+
+
+        overlay.style.display =
+            "none";
+
+
+        await wait(400);
+    }
+
+
+    function resetOverlay() {
+
+        overlay.style.display =
+            "none";
+
+
+        /*
+         * Remove rarity class from the previous roll.
+         */
+
+        overlay.className =
+            "";
+
+
+        eggImage.style.display =
+            "none";
+
+
+        placeholderEgg.style.display =
+            "none";
+
+
+        eggImage.removeAttribute(
+            "src"
+        );
+
+
+        eggImage.className =
+            "";
+
+
+        placeholderEgg.className =
+            "";
+
+
+        glowElement.className =
+            "";
+
+
+        flashElement.className =
+            "";
+
+
+        eggNameElement.className =
+            "";
+
+
+        rarityElement.className =
+            "";
+
+
+        collectionStatusElement.className =
+            "";
+
+
+        usernameElement.textContent =
+            "";
+
+
+        eggNameElement.textContent =
+            "";
+
+
+        rarityElement.textContent =
+            "";
+
+
+        collectionStatusElement.textContent =
+            "";
+    }
+
+
+    function wait(milliseconds) {
+
+        return new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    milliseconds
+                )
+        );
     }
 </script>
 
