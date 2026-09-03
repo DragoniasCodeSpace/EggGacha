@@ -8,14 +8,24 @@ import { connectToEventSub } from "./twitch/eventSub.js";
 import { getOrCreateEggReward } from "./twitch/api.js";
 
 import { rollEgg } from "./gacha/rollEgg.js";
+import { eggs } from "./gacha/eggs.js";
 
-import { getOrCreateUser } from "./database/users.js";
-import { addEggToCollection } from "./database/collections.js";
+import {
+    getOrCreateUser,
+    getUserByTwitchId
+} from "./database/users.js";
+
+import {
+    addEggToCollection,
+    getUserCollection
+} from "./database/collections.js";
+
 
 const app = express();
 
 let eventSubSocket = null;
 let eggRewardId = null;
+
 
 console.log("");
 console.log("=======================");
@@ -23,11 +33,14 @@ console.log("      🥚 EggGacha");
 console.log("=======================");
 console.log("");
 
+
+// Twitch authentication
 registerAuthRoutes(app, async (twitchSession) => {
     console.log(
         `Twitch connected: ${twitchSession.broadcaster.displayName}`
     );
 
+    // Find EggGacha's reward or create it if it doesn't exist.
     const eggReward = await getOrCreateEggReward(
         twitchSession
     );
@@ -38,6 +51,7 @@ registerAuthRoutes(app, async (twitchSession) => {
         `Listening for EggGacha reward: ${eggReward.title}`
     );
 
+    // Prevent multiple EventSub connections.
     if (eventSubSocket) {
         eventSubSocket.close();
     }
@@ -49,25 +63,24 @@ registerAuthRoutes(app, async (twitchSession) => {
 });
 
 
+// Handle Channel Point redemption
 async function handleRedemption(event) {
-    // Ignore every Channel Point reward
-    // except EggGacha's reward.
+
+    // Ignore every reward except EggGacha's reward.
     if (event.reward.id !== eggRewardId) {
         return;
     }
 
-    // Roll the egg.
+    // Roll an egg.
     const egg = rollEgg();
 
-    // Find the Twitch viewer in the database,
-    // or create them if this is their first roll.
+    // Find the viewer or create them.
     const user = getOrCreateUser(
         event.user_id,
         event.user_name
     );
 
-    // Add the egg to their collection.
-    // If they already own it, quantity increases by 1.
+    // Add the rolled egg to their collection.
     const collectionEntry = addEggToCollection(
         user.id,
         egg.id
@@ -81,16 +94,102 @@ async function handleRedemption(event) {
     console.log("Rarity:", egg.rarity);
     console.log("Owned:", collectionEntry.quantity);
     console.log("");
-
-    // Later:
-    // send result to OBS overlay
-    // send result to chat
 }
 
 
+// Collection page
+app.get(
+    "/collection/:twitchUserId",
+    (req, res) => {
+
+        const twitchUserId =
+            req.params.twitchUserId;
+
+        const user = getUserByTwitchId(
+            twitchUserId
+        );
+
+        if (!user) {
+            return res
+                .status(404)
+                .send("Viewer not found.");
+        }
+
+        const collection = getUserCollection(
+            user.id
+        );
+
+        const totalEggs = collection.reduce(
+            (total, entry) =>
+                total + entry.quantity,
+            0
+        );
+
+        const uniqueEggs = collection.length;
+
+        const eggsHtml = collection
+            .filter(entry => entry.egg)
+            .map(entry => `
+                <li>
+                    <strong>
+                        ${entry.egg.name}
+                    </strong>
+
+                    (${entry.egg.rarity})
+
+                    ×${entry.quantity}
+                </li>
+            `)
+            .join("");
+
+        res.send(`
+            <!DOCTYPE html>
+
+            <html>
+                <head>
+                    <meta charset="UTF-8">
+
+                    <title>
+                        ${user.display_name}'s Egg Collection
+                    </title>
+                </head>
+
+                <body>
+
+                    <h1>
+                        🥚 ${user.display_name}'s Egg Collection
+                    </h1>
+
+                    <p>
+                        Total Eggs:
+                        <strong>${totalEggs}</strong>
+                    </p>
+
+                    <p>
+                        Unique Eggs:
+                        <strong>
+                            ${uniqueEggs} / ${eggs.length}
+                        </strong>
+                    </p>
+
+                    <hr>
+
+                    <ul>
+                        ${eggsHtml}
+                    </ul>
+
+                </body>
+            </html>
+        `);
+    }
+);
+
+
+// Start EggGacha
 app.listen(
     config.server.port,
     () => {
+
         console.log(
             `EggGacha running on http://localhost:${config.server.port}`
         );

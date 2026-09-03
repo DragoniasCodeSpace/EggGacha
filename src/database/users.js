@@ -38,3 +38,11 @@ export function getOrCreateUser(twitchUserId, displayName) {
         WHERE id = ?
     `).get(result.lastInsertRowid);
 }
+
+export function getUserByTwitchId(twitchUserId) {
+    return db.prepare(`
+        SELECT *
+        FROM users
+        WHERE twitch_user_id = ?
+    `).get(twitchUserId);
+}

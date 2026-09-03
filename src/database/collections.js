@@ -1,4 +1,5 @@
 import db from "./database.js";
+import { eggs } from "../gacha/eggs.js";
 
 export function addEggToCollection(userId, eggId) {
     db.prepare(`
@@ -26,4 +27,26 @@ export function addEggToCollection(userId, eggId) {
         userId,
         eggId
     );
+}
+
+export function getUserCollection(userId) {
+    const collection = db.prepare(`
+        SELECT
+            egg_id,
+            quantity,
+            first_obtained_at
+        FROM user_eggs
+        WHERE user_id = ?
+    `).all(userId);
+
+    return collection.map(entry => {
+        const egg = eggs.find(
+            egg => egg.id === entry.egg_id
+        );
+
+        return {
+            ...entry,
+            egg
+        };
+    });
 }
