@@ -1,4 +1,5 @@
 import "dotenv/config";
+
 import express from "express";
 import http from "http";
 import path from "path";
@@ -37,8 +38,11 @@ import {
 const app = express();
 const server = http.createServer(app);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename =
+    fileURLToPath(import.meta.url);
+
+const __dirname =
+    path.dirname(__filename);
 
 
 // ======================================================
@@ -69,6 +73,28 @@ app.use(
 );
 
 
+app.use(
+    "/overlay-files",
+    express.static(
+        path.join(
+            __dirname,
+            "overlay"
+        )
+    )
+);
+
+
+app.use(
+    "/styles",
+    express.static(
+        path.join(
+            __dirname,
+            "styles"
+        )
+    )
+);
+
+
 // ======================================================
 // OBS overlay WebSocket
 // ======================================================
@@ -77,7 +103,7 @@ startOverlayServer(server);
 
 
 // ======================================================
-// App state
+// Application state
 // ======================================================
 
 let eventSubSocket = null;
@@ -85,7 +111,7 @@ let eggRewardId = null;
 
 
 // ======================================================
-// Startup message
+// Startup
 // ======================================================
 
 console.log("");
@@ -171,6 +197,7 @@ async function handleRedemption(event) {
 
     console.log("");
     console.log("🥚 Egg rolled!");
+
     console.log(
         "Viewer:",
         user.display_name
@@ -260,12 +287,6 @@ app.get(
         let user;
 
 
-        // Twitch user IDs are numeric.
-        //
-        // If the provided value contains
-        // only numbers, search by Twitch ID.
-        //
-        // Otherwise search by display name.
         if (/^\d+$/.test(viewer)) {
 
             user =
@@ -279,6 +300,7 @@ app.get(
                 getUserByDisplayName(
                     viewer
                 );
+
         }
 
 
@@ -290,6 +312,7 @@ app.get(
                     error:
                         "Viewer not found."
                 });
+
         }
 
 
@@ -338,14 +361,7 @@ app.get(
 
 
         // ==================================================
-        // Build complete egg list
-        // ==================================================
-        //
-        // We return all eggs, including eggs
-        // the viewer has not unlocked.
-        //
-        // This allows the collection page
-        // to display locked silhouettes.
+        // Complete egg list
         // ==================================================
 
         const collectionEggs =
@@ -392,7 +408,7 @@ app.get(
 
 
         // ==================================================
-        // API response
+        // Response
         // ==================================================
 
         res.json({

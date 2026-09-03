@@ -1,0 +1,750 @@
+/* =====================================================
+   PAGE
+   ===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    background: transparent;
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+
+body {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =====================================================
+   OVERLAY
+   ===================================================== */
+
+#overlay {
+    position: relative;
+
+    width: 700px;
+    min-height: 600px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+
+    transform:
+        scale(0.92);
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+
+    pointer-events: none;
+}
+
+
+#overlay.visible {
+    opacity: 1;
+
+    transform:
+        scale(1);
+}
+
+
+/* =====================================================
+   USERNAME
+   ===================================================== */
+
+#username {
+    margin-bottom: 15px;
+
+    color:
+        var(--color-text);
+
+    font-size: 32px;
+    font-weight: 800;
+
+    text-align: center;
+
+    text-shadow:
+        0 4px 12px
+        rgba(0, 0, 0, 0.9);
+}
+
+
+/* =====================================================
+   EGG CONTAINER
+   ===================================================== */
+
+.egg-container {
+    position: relative;
+
+    width: 330px;
+    height: 330px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =====================================================
+   PLACEHOLDER EGG
+   ===================================================== */
+
+#egg-placeholder {
+    position: absolute;
+
+    font-size: 190px;
+
+    opacity: 1;
+
+    filter:
+        drop-shadow(
+            0 12px 15px
+            rgba(0, 0, 0, 0.65)
+        );
+}
+
+
+/* =====================================================
+   ACTUAL EGG IMAGE
+   ===================================================== */
+
+#egg-image {
+    position: absolute;
+
+    max-width: 300px;
+    max-height: 300px;
+
+    object-fit: contain;
+
+    opacity: 0;
+
+    transform:
+        scale(0.55);
+
+    filter:
+        drop-shadow(
+            0 12px 22px
+            rgba(0, 0, 0, 0.65)
+        );
+}
+
+
+/* =====================================================
+   REVEAL FLASH
+   ===================================================== */
+
+#flash {
+    position: absolute;
+
+    width: 300px;
+    height: 300px;
+
+    border-radius: 50%;
+
+    opacity: 0;
+
+    transform:
+        scale(0.25);
+
+    background:
+        var(--rarity-common);
+
+    filter:
+        blur(30px);
+
+    z-index: -1;
+}
+
+
+/* =====================================================
+   EGG NAME
+   ===================================================== */
+
+#egg-name {
+    margin-top: 8px;
+
+    color:
+        var(--color-text);
+
+    font-size: 36px;
+    font-weight: 900;
+
+    text-align: center;
+
+    text-shadow:
+        0 4px 12px
+        rgba(0, 0, 0, 0.9);
+}
+
+
+/* =====================================================
+   RARITY
+   ===================================================== */
+
+#rarity {
+    margin-top: 6px;
+
+    color:
+        var(--rarity-common);
+
+    font-size: 19px;
+    font-weight: 900;
+
+    letter-spacing: 4px;
+
+    text-align: center;
+
+    text-transform: uppercase;
+}
+
+
+/* =====================================================
+   COLLECTION STATUS
+   ===================================================== */
+
+#collection-status {
+    margin-top: 12px;
+
+    padding:
+        7px 16px;
+
+    border:
+        1px solid
+        var(--color-border-light);
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(0, 0, 0, 0.58);
+
+    color:
+        var(--color-text);
+
+    font-size: 15px;
+    font-weight: 800;
+
+    box-shadow:
+        var(--shadow-small);
+}
+
+
+#collection-status.new {
+    color:
+        var(--color-success);
+
+    border-color:
+        var(--color-success);
+}
+
+
+/* =====================================================
+   SHAKE ANIMATION
+   ===================================================== */
+
+#egg-placeholder.shake {
+    animation:
+        eggShake 0.12s linear infinite;
+}
+
+
+@keyframes eggShake {
+
+    0% {
+        transform:
+            translateX(-7px)
+            rotate(-4deg);
+    }
+
+    25% {
+        transform:
+            translateX(5px)
+            rotate(3deg);
+    }
+
+    50% {
+        transform:
+            translateX(-4px)
+            rotate(-2deg);
+    }
+
+    75% {
+        transform:
+            translateX(7px)
+            rotate(4deg);
+    }
+
+    100% {
+        transform:
+            translateX(-7px)
+            rotate(-4deg);
+    }
+
+}
+
+
+/* =====================================================
+   EGG REVEAL
+   ===================================================== */
+
+#egg-image.reveal {
+    animation:
+        eggReveal 0.7s
+        cubic-bezier(
+            0.2,
+            1.5,
+            0.4,
+            1
+        )
+        forwards;
+}
+
+
+@keyframes eggReveal {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            scale(0.4)
+            rotate(-12deg);
+    }
+
+    65% {
+        opacity: 1;
+
+        transform:
+            scale(1.14)
+            rotate(3deg);
+    }
+
+    100% {
+        opacity: 1;
+
+        transform:
+            scale(1)
+            rotate(0);
+    }
+
+}
+
+
+/* =====================================================
+   FLASH ANIMATION
+   ===================================================== */
+
+#flash.flash {
+    animation:
+        flashReveal 0.9s ease-out;
+}
+
+
+@keyframes flashReveal {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            scale(0.2);
+    }
+
+    30% {
+        opacity: 0.9;
+
+        transform:
+            scale(1.3);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            scale(1.8);
+    }
+
+}
+
+
+/* =====================================================
+   FLOATING ANIMATION
+   Legendary / Exotic
+   ===================================================== */
+
+#egg-image.float {
+    animation:
+        eggFloat 2.2s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes eggFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0);
+    }
+
+    50% {
+        transform:
+            translateY(-12px);
+    }
+
+}
+
+
+/* =====================================================
+   MYTHIC ANIMATION
+   ===================================================== */
+
+#egg-image.mythic-pulse {
+    animation:
+        mythicPulse 1.8s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes mythicPulse {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+
+        filter:
+            drop-shadow(
+                0 0 18px
+                var(--rarity-mythic-glow)
+            );
+    }
+
+    50% {
+        transform:
+            scale(1.05);
+
+        filter:
+            drop-shadow(
+                0 0 42px
+                var(--rarity-mythic-glow)
+            );
+    }
+
+}
+
+
+/* =====================================================
+   ANCIENT ANIMATION
+   ===================================================== */
+
+#egg-image.ancient-pulse {
+    animation:
+        ancientPulse 1.7s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes ancientPulse {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+
+        filter:
+            drop-shadow(
+                0 0 20px
+                var(--rarity-ancient-glow)
+            );
+    }
+
+    50% {
+        transform:
+            scale(1.06);
+
+        filter:
+            drop-shadow(
+                0 0 48px
+                var(--rarity-ancient-glow)
+            );
+    }
+
+}
+
+
+/* =====================================================
+   ETERNAL ANIMATION
+   ===================================================== */
+
+#egg-image.eternal-pulse {
+    animation:
+        eternalPulse 1.6s
+        ease-in-out
+        infinite;
+}
+
+
+@keyframes eternalPulse {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+
+        filter:
+            drop-shadow(
+                0 0 20px
+                var(--rarity-eternal-pink)
+            )
+            drop-shadow(
+                0 0 30px
+                var(--rarity-eternal-blue)
+            );
+    }
+
+    50% {
+        transform:
+            scale(1.08);
+
+        filter:
+            drop-shadow(
+                0 0 36px
+                var(--rarity-eternal-purple)
+            )
+            drop-shadow(
+                0 0 55px
+                var(--rarity-eternal-gold)
+            );
+    }
+
+}
+
+
+/* =====================================================
+   COMMON
+   ===================================================== */
+
+#overlay.common #rarity {
+    color:
+        var(--rarity-common);
+}
+
+
+#overlay.common #flash {
+    background:
+        var(--rarity-common);
+}
+
+
+/* =====================================================
+   UNCOMMON
+   ===================================================== */
+
+#overlay.uncommon #rarity {
+    color:
+        var(--rarity-uncommon);
+}
+
+
+#overlay.uncommon #flash {
+    background:
+        var(--rarity-uncommon);
+}
+
+
+/* =====================================================
+   RARE
+   ===================================================== */
+
+#overlay.rare #rarity {
+    color:
+        var(--rarity-rare);
+
+    text-shadow:
+        0 0 15px
+        var(--rarity-rare-glow);
+}
+
+
+#overlay.rare #flash {
+    background:
+        var(--rarity-rare);
+}
+
+
+/* =====================================================
+   EPIC
+   ===================================================== */
+
+#overlay.epic #rarity {
+    color:
+        var(--rarity-epic);
+
+    text-shadow:
+        0 0 18px
+        var(--rarity-epic-glow);
+}
+
+
+#overlay.epic #flash {
+    background:
+        var(--rarity-epic);
+}
+
+
+/* =====================================================
+   LEGENDARY
+   ===================================================== */
+
+#overlay.legendary #rarity {
+    color:
+        var(--rarity-legendary);
+
+    text-shadow:
+        0 0 22px
+        var(--rarity-legendary-glow);
+}
+
+
+#overlay.legendary #flash {
+    background:
+        var(--rarity-legendary);
+}
+
+
+/* =====================================================
+   EXOTIC
+   ===================================================== */
+
+#overlay.exotic #rarity {
+    color:
+        var(--rarity-exotic);
+
+    text-shadow:
+        0 0 24px
+        var(--rarity-exotic-glow);
+}
+
+
+#overlay.exotic #flash {
+    background:
+        var(--rarity-exotic);
+}
+
+
+/* =====================================================
+   MYTHIC
+   ===================================================== */
+
+#overlay.mythic #rarity {
+    color:
+        var(--rarity-mythic);
+
+    text-shadow:
+        0 0 28px
+        var(--rarity-mythic-glow);
+}
+
+
+#overlay.mythic #flash {
+    background:
+        var(--rarity-mythic);
+}
+
+
+/* =====================================================
+   ANCIENT
+   ===================================================== */
+
+#overlay.ancient #rarity {
+    color:
+        var(--rarity-ancient);
+
+    text-shadow:
+        0 0 30px
+        var(--rarity-ancient-glow);
+}
+
+
+#overlay.ancient #flash {
+    background:
+        var(--rarity-ancient);
+}
+
+
+/* =====================================================
+   ETERNAL
+   ===================================================== */
+
+#overlay.eternal #rarity {
+    color:
+        var(--rarity-eternal);
+
+    text-shadow:
+        0 0 12px
+        var(--rarity-eternal-pink),
+        0 0 24px
+        var(--rarity-eternal-blue),
+        0 0 36px
+        var(--rarity-eternal-gold);
+
+    animation:
+        eternalText 1.8s
+        ease-in-out
+        infinite;
+}
+
+
+#overlay.eternal #flash {
+    background:
+        var(--rarity-eternal);
+}
+
+
+@keyframes eternalText {
+
+    0%,
+    100% {
+        text-shadow:
+            0 0 12px
+            var(--rarity-eternal-pink),
+            0 0 24px
+            var(--rarity-eternal-blue);
+    }
+
+    50% {
+        text-shadow:
+            0 0 20px
+            var(--rarity-eternal-purple),
+            0 0 34px
+            var(--rarity-eternal-gold);
+    }
+
+}

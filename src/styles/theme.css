@@ -1,0 +1,231 @@
+:root {
+
+    /* =====================================================
+       EGGGACHA GLOBAL THEME
+
+       Change colours here to recolour EggGacha.
+       ===================================================== */
+
+
+    /* =====================================================
+       MAIN BACKGROUNDS
+       ===================================================== */
+
+    --color-background: #07050c;
+    --color-background-secondary: #160d22;
+
+    --color-surface: #171120;
+    --color-surface-light: #21182d;
+
+    --color-card: rgba(25, 18, 35, 0.90);
+    --color-card-hover: rgba(35, 25, 48, 0.95);
+
+
+    /* =====================================================
+       APPLICATION BACKGROUND GRADIENT
+       ===================================================== */
+
+    --background-glow-primary: #552080;
+    --background-glow-secondary: #351253;
+    --background-glow-accent: #28103f;
+
+
+    /* =====================================================
+       TEXT
+       ===================================================== */
+
+    --color-text: #ffffff;
+    --color-text-secondary: #b9adc7;
+    --color-text-muted: #786d83;
+
+
+    /* =====================================================
+       MAIN ACCENT
+       ===================================================== */
+
+    --color-primary: #9d5cff;
+    --color-primary-light: #c59aff;
+    --color-primary-dark: #6533a6;
+
+    --color-primary-glow:
+        rgba(157, 92, 255, 0.45);
+
+
+    /* =====================================================
+       BORDERS
+       ===================================================== */
+
+    --color-border:
+        rgba(255, 255, 255, 0.10);
+
+    --color-border-light:
+        rgba(255, 255, 255, 0.18);
+
+
+    /* =====================================================
+       LOCKED EGGS
+       ===================================================== */
+
+    --color-locked: #35303d;
+    --color-locked-text: #77707f;
+
+    --color-locked-background:
+        rgba(18, 16, 22, 0.80);
+
+
+    /* =====================================================
+       DARK TRANSPARENT ELEMENTS
+       ===================================================== */
+
+    --color-dark-transparent:
+        rgba(0, 0, 0, 0.22);
+
+    --color-dark-transparent-strong:
+        rgba(0, 0, 0, 0.72);
+
+    --color-overlay-shadow:
+        rgba(0, 0, 0, 0.90);
+
+    --color-overlay-drop-shadow:
+        rgba(0, 0, 0, 0.65);
+
+    --color-overlay-status:
+        rgba(0, 0, 0, 0.58);
+
+
+    /* =====================================================
+       COMMON
+       ===================================================== */
+
+    --rarity-common: #a7a7a7;
+    --rarity-common-dark: #555555;
+
+    --rarity-common-glow:
+        rgba(167, 167, 167, 0.35);
+
+
+    /* =====================================================
+       UNCOMMON
+       ===================================================== */
+
+    --rarity-uncommon: #62d26f;
+    --rarity-uncommon-dark: #286b31;
+
+    --rarity-uncommon-glow:
+        rgba(98, 210, 111, 0.40);
+
+
+    /* =====================================================
+       RARE
+       ===================================================== */
+
+    --rarity-rare: #4d9fff;
+    --rarity-rare-dark: #27568f;
+
+    --rarity-rare-glow:
+        rgba(77, 159, 255, 0.45);
+
+
+    /* =====================================================
+       EPIC
+       ===================================================== */
+
+    --rarity-epic: #a75cff;
+    --rarity-epic-dark: #633096;
+
+    --rarity-epic-glow:
+        rgba(167, 92, 255, 0.50);
+
+
+    /* =====================================================
+       LEGENDARY
+       ===================================================== */
+
+    --rarity-legendary: #ffad33;
+    --rarity-legendary-dark: #965d12;
+
+    --rarity-legendary-glow:
+        rgba(255, 173, 51, 0.55);
+
+
+    /* =====================================================
+       EXOTIC
+       ===================================================== */
+
+    --rarity-exotic: #ff4fc3;
+    --rarity-exotic-dark: #9a246f;
+
+    --rarity-exotic-glow:
+        rgba(255, 79, 195, 0.55);
+
+
+    /* =====================================================
+       MYTHIC
+       ===================================================== */
+
+    --rarity-mythic: #d45cff;
+    --rarity-mythic-secondary: #743cff;
+    --rarity-mythic-dark: #6d2191;
+
+    --rarity-mythic-glow:
+        rgba(190, 75, 255, 0.65);
+
+    --rarity-mythic-background:
+        rgba(50, 20, 75, 0.85);
+
+
+    /* =====================================================
+       ANCIENT
+       ===================================================== */
+
+    --rarity-ancient: #ffd84d;
+    --rarity-ancient-secondary: #ff9f1c;
+    --rarity-ancient-dark: #9b6c0f;
+
+    --rarity-ancient-glow:
+        rgba(255, 205, 60, 0.70);
+
+    --rarity-ancient-background:
+        rgba(80, 55, 10, 0.75);
+
+
+    /* =====================================================
+       ETERNAL
+       ===================================================== */
+
+    --rarity-eternal: #ffffff;
+
+    --rarity-eternal-pink: #ff75e6;
+    --rarity-eternal-purple: #a775ff;
+    --rarity-eternal-blue: #70d6ff;
+    --rarity-eternal-gold: #ffe66d;
+
+    --rarity-eternal-glow:
+        rgba(255, 255, 255, 0.80);
+
+
+    /* =====================================================
+       STATUS
+       ===================================================== */
+
+    --color-success: #63df87;
+    --color-warning: #ffc857;
+    --color-error: #ff5c72;
+
+
+    /* =====================================================
+       SHADOWS
+       ===================================================== */
+
+    --shadow-small:
+        0 5px 15px
+        rgba(0, 0, 0, 0.25);
+
+    --shadow-medium:
+        0 10px 30px
+        rgba(0, 0, 0, 0.35);
+
+    --shadow-large:
+        0 20px 60px
+        rgba(0, 0, 0, 0.50);
+}
