@@ -1,45 +1,28 @@
 import WebSocket from "ws";
 import { config } from "../config/config.js";
 
-const EVENTSUB_URL =
-    "wss://eventsub.wss.twitch.tv/ws";
+const EVENTSUB_URL = "wss://eventsub.wss.twitch.tv/ws";
 
-export function connectToEventSub(
-    twitchSession,
-    onRedemption
-) {
-    console.log(
-        "Connecting to Twitch EventSub..."
-    );
+export function connectToEventSub(twitchSession, onRedemption) {
+    console.log("Connecting to Twitch EventSub...");
 
-    const socket =
-        new WebSocket(EVENTSUB_URL);
+    const socket = new WebSocket(EVENTSUB_URL);
 
     socket.on("open", () => {
-        console.log(
-            "Connected to Twitch EventSub ✓"
-        );
+        console.log("Connected to Twitch EventSub ✓");
     });
 
     socket.on("message", async (rawData) => {
         try {
-            const message =
-                JSON.parse(
-                    rawData.toString()
-                );
+            const message = JSON.parse(rawData.toString());
 
-            const messageType =
-                message.metadata.message_type;
+            const messageType = message.metadata.message_type;
 
             switch (messageType) {
                 case "session_welcome": {
-                    const sessionId =
-                        message.payload.session.id;
+                    const sessionId = message.payload.session.id;
 
-                    console.log(
-                        "EventSub session:",
-                        sessionId
-                    );
+                    console.log("EventSub session:", sessionId);
 
                     await subscribeToRedemptions(
                         twitchSession,
@@ -50,16 +33,7 @@ export function connectToEventSub(
                 }
 
                 case "notification": {
-                    const event =
-                        message.payload.event;
-
-                    console.log(
-                        "Channel Point redemption received:"
-                    );
-
-                    console.log(
-                        `${event.user_name} redeemed ${event.reward.title}`
-                    );
+                    const event = message.payload.event;
 
                     if (onRedemption) {
                         await onRedemption(event);
@@ -69,15 +43,25 @@ export function connectToEventSub(
                 }
 
                 case "session_keepalive": {
-                    // Nothing required.
+                    // Twitch sends this to keep the connection alive.
+                    // Nothing needs to happen here.
                     break;
                 }
 
                 case "session_reconnect": {
+                    const reconnectUrl =
+                        message.payload.session.reconnect_url;
+
                     console.log(
                         "Twitch requested EventSub reconnect."
                     );
 
+                    console.log(
+                        "Reconnect URL:",
+                        reconnectUrl
+                    );
+
+                    // We'll properly handle reconnecting later.
                     break;
                 }
 
@@ -97,7 +81,6 @@ export function connectToEventSub(
                     );
                 }
             }
-
         } catch (error) {
             console.error(
                 "Failed to process EventSub message:",
@@ -113,15 +96,26 @@ export function connectToEventSub(
         );
     });
 
-    socket.on("close", () => {
+    socket.on("close", (code, reason) => {
         console.log(
             "Disconnected from Twitch EventSub."
         );
+
+        console.log(
+            "Close code:",
+            code
+        );
+
+        if (reason) {
+            console.log(
+                "Reason:",
+                reason.toString()
+            );
+        }
     });
 
     return socket;
 }
-
 
 async function subscribeToRedemptions(
     twitchSession,
@@ -170,13 +164,15 @@ async function subscribeToRedemptions(
         }
     );
 
-    const data =
-        await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(
-            `Failed to subscribe to redemptions: ${JSON.stringify(data)}`
+        console.error(
+            "Failed to create EventSub subscription:",
+            data
         );
+
+        return;
     }
 
     console.log(
