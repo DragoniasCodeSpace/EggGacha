@@ -46,3 +46,11 @@ export function getUserByTwitchId(twitchUserId) {
         WHERE twitch_user_id = ?
     `).get(twitchUserId);
 }
+
+export function getUserByDisplayName(displayName) {
+    return db.prepare(`
+        SELECT *
+        FROM users
+        WHERE LOWER(display_name) = LOWER(?)
+    `).get(displayName);
+}

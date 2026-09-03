@@ -15,7 +15,8 @@ import { eggs } from "./gacha/eggs.js";
 
 import {
     getOrCreateUser,
-    getUserByTwitchId
+    getUserByTwitchId,
+    getUserByDisplayName
 } from "./database/users.js";
 
 import {
@@ -44,14 +45,6 @@ const __dirname = path.dirname(__filename);
 // Static files
 // ======================================================
 
-// Egg images:
-//
-// public/assets/eggs/STORMHEART.png
-//
-// becomes:
-//
-// http://localhost:3000/assets/eggs/STORMHEART.png
-
 app.use(
     "/assets",
     express.static(
@@ -64,11 +57,6 @@ app.use(
     )
 );
 
-
-// Collection frontend files:
-//
-// src/collection/collection.css
-// src/collection/collection.js
 
 app.use(
     "/collection-files",
@@ -120,8 +108,6 @@ registerAuthRoutes(
         );
 
 
-        // Get the EggGacha reward,
-        // or create it if it does not exist.
         const eggReward =
             await getOrCreateEggReward(
                 twitchSession
@@ -137,8 +123,6 @@ registerAuthRoutes(
         );
 
 
-        // Prevent multiple EventSub sockets
-        // from running at the same time.
         if (eventSubSocket) {
             eventSubSocket.close();
         }
@@ -159,8 +143,6 @@ registerAuthRoutes(
 
 async function handleRedemption(event) {
 
-    // Ignore every reward except
-    // EggGacha's own reward.
     if (
         event.reward.id !==
         eggRewardId
@@ -169,13 +151,10 @@ async function handleRedemption(event) {
     }
 
 
-    // Roll rarity + egg.
     const egg =
         rollEgg();
 
 
-    // Find viewer or create them
-    // if this is their first roll.
     const user =
         getOrCreateUser(
             event.user_id,
@@ -183,7 +162,6 @@ async function handleRedemption(event) {
         );
 
 
-    // Add the egg to their collection.
     const collectionEntry =
         addEggToCollection(
             user.id,
@@ -221,7 +199,6 @@ async function handleRedemption(event) {
     console.log("");
 
 
-    // Send the result to the OBS overlay.
     sendEggRollToOverlay(
         user,
         egg,
@@ -254,7 +231,7 @@ app.get(
 // ======================================================
 
 app.get(
-    "/collection/:twitchUserId",
+    "/collection/:viewer",
     (req, res) => {
 
         res.sendFile(
@@ -273,17 +250,36 @@ app.get(
 // ======================================================
 
 app.get(
-    "/api/collection/:twitchUserId",
+    "/api/collection/:viewer",
     (req, res) => {
 
-        const twitchUserId =
-            req.params.twitchUserId;
+        const viewer =
+            req.params.viewer;
 
 
-        const user =
-            getUserByTwitchId(
-                twitchUserId
-            );
+        let user;
+
+
+        // Twitch user IDs are numeric.
+        //
+        // If the provided value contains
+        // only numbers, search by Twitch ID.
+        //
+        // Otherwise search by display name.
+        if (/^\d+$/.test(viewer)) {
+
+            user =
+                getUserByTwitchId(
+                    viewer
+                );
+
+        } else {
+
+            user =
+                getUserByDisplayName(
+                    viewer
+                );
+        }
 
 
         if (!user) {
@@ -303,8 +299,10 @@ app.get(
             );
 
 
-        // Total number of eggs,
-        // including duplicates.
+        // ==================================================
+        // Collection statistics
+        // ==================================================
+
         const totalEggs =
             collection.reduce(
                 (
@@ -317,8 +315,6 @@ app.get(
             );
 
 
-        // Number of unique valid eggs
-        // the viewer owns.
         const uniqueEggs =
             collection.filter(
                 entry =>
@@ -326,20 +322,32 @@ app.get(
             ).length;
 
 
+        const totalAvailable =
+            eggs.length;
+
+
         const completion =
-            Math.round(
-                (
-                    uniqueEggs /
-                    eggs.length
-                ) * 100
-            );
+            totalAvailable === 0
+                ? 0
+                : Math.round(
+                    (
+                        uniqueEggs /
+                        totalAvailable
+                    ) * 100
+                );
 
 
-        // Build a list containing
-        // every egg in the game.
+        // ==================================================
+        // Build complete egg list
+        // ==================================================
         //
-        // This allows the frontend
-        // to also show locked eggs.
+        // We return all eggs, including eggs
+        // the viewer has not unlocked.
+        //
+        // This allows the collection page
+        // to display locked silhouettes.
+        // ==================================================
+
         const collectionEggs =
             eggs.map(
                 egg => {
@@ -372,11 +380,20 @@ app.get(
 
                         quantity:
                             collectionEntry
-                                ?.quantity ?? 0
+                                ?.quantity ?? 0,
+
+                        firstObtainedAt:
+                            collectionEntry
+                                ?.first_obtained_at
+                                ?? null
                     };
                 }
             );
 
+
+        // ==================================================
+        // API response
+        // ==================================================
 
         res.json({
             user: {
@@ -390,10 +407,7 @@ app.get(
             stats: {
                 totalEggs,
                 uniqueEggs,
-
-                totalAvailable:
-                    eggs.length,
-
+                totalAvailable,
                 completion
             },
 
@@ -428,7 +442,6 @@ server.listen(
         console.log(
             "Login with Twitch to start."
         );
-
         console.log("");
     }
 );
