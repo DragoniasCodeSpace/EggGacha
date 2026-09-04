@@ -1,181 +1,331 @@
-import WebSocket from "ws";
+import { WebSocket } from "ws";
+
 import { config } from "../config/config.js";
+import { subscribeToChat } from "./chat.js";
 
-const EVENTSUB_URL = "wss://eventsub.wss.twitch.tv/ws";
 
-export function connectToEventSub(twitchSession, onRedemption) {
-    console.log("Connecting to Twitch EventSub...");
+const EVENTSUB_URL =
+    "wss://eventsub.wss.twitch.tv/ws";
 
-    const socket = new WebSocket(EVENTSUB_URL);
 
-    socket.on("open", () => {
-        console.log("Connected to Twitch EventSub ✓");
-    });
+// ======================================================
+// Connect to Twitch EventSub
+// ======================================================
 
-    socket.on("message", async (rawData) => {
-        try {
-            const message = JSON.parse(rawData.toString());
+export function connectToEventSub(
+    twitchSession,
+    onRedemption,
+    onChatMessage
+) {
 
-            const messageType = message.metadata.message_type;
+    const socket =
+        new WebSocket(
+            EVENTSUB_URL
+        );
 
-            switch (messageType) {
-                case "session_welcome": {
-                    const sessionId = message.payload.session.id;
 
-                    console.log("EventSub session:", sessionId);
+    socket.on(
+        "open",
+        () => {
+
+            console.log(
+                "Connected to Twitch EventSub WebSocket ✓"
+            );
+
+        }
+    );
+
+
+    socket.on(
+        "message",
+        async rawMessage => {
+
+            try {
+
+                const message =
+                    JSON.parse(
+                        rawMessage.toString()
+                    );
+
+
+                const messageType =
+                    message.metadata?.message_type;
+
+
+                // ======================================
+                // Session welcome
+                // ======================================
+
+                if (
+                    messageType ===
+                    "session_welcome"
+                ) {
+
+                    const sessionId =
+                        message.payload
+                            ?.session
+                            ?.id;
+
+
+                    if (!sessionId) {
+
+                        throw new Error(
+                            "Twitch EventSub did not provide a session ID."
+                        );
+
+                    }
+
+
+                    console.log(
+                        "Twitch EventSub session ready ✓"
+                    );
+
 
                     await subscribeToRedemptions(
                         twitchSession,
                         sessionId
                     );
 
-                    break;
-                }
 
-                case "notification": {
-                    const event = message.payload.event;
-
-                    if (onRedemption) {
-                        await onRedemption(event);
-                    }
-
-                    break;
-                }
-
-                case "session_keepalive": {
-                    // Twitch sends this to keep the connection alive.
-                    // Nothing needs to happen here.
-                    break;
-                }
-
-                case "session_reconnect": {
-                    const reconnectUrl =
-                        message.payload.session.reconnect_url;
-
-                    console.log(
-                        "Twitch requested EventSub reconnect."
+                    await subscribeToChat(
+                        twitchSession,
+                        sessionId
                     );
 
+
+                    return;
+
+                }
+
+
+                // ======================================
+                // Keepalive
+                // ======================================
+
+                if (
+                    messageType ===
+                    "session_keepalive"
+                ) {
+
+                    return;
+
+                }
+
+
+                // ======================================
+                // Twitch reconnect request
+                // ======================================
+
+                if (
+                    messageType ===
+                    "session_reconnect"
+                ) {
+
+                    const reconnectUrl =
+                        message.payload
+                            ?.session
+                            ?.reconnect_url;
+
+
                     console.log(
-                        "Reconnect URL:",
+                        "Twitch requested EventSub reconnect:",
                         reconnectUrl
                     );
 
-                    // We'll properly handle reconnecting later.
-                    break;
+
+                    return;
+
                 }
 
-                case "revocation": {
-                    console.error(
-                        "EventSub subscription revoked:",
-                        message.payload.subscription
+
+                // ======================================
+                // Revocation
+                // ======================================
+
+                if (
+                    messageType ===
+                    "revocation"
+                ) {
+
+                    console.warn(
+                        "Twitch EventSub subscription revoked:",
+                        message.payload?.subscription
                     );
 
-                    break;
+
+                    return;
+
                 }
 
-                default: {
-                    console.log(
-                        "Unknown EventSub message:",
-                        messageType
-                    );
+
+                // ======================================
+                // Notification
+                // ======================================
+
+                if (
+                    messageType ===
+                    "notification"
+                ) {
+
+                    const subscriptionType =
+                        message.payload
+                            ?.subscription
+                            ?.type;
+
+
+                    const event =
+                        message.payload
+                            ?.event;
+
+
+                    // ==================================
+                    // Channel Point redemption
+                    // ==================================
+
+                    if (
+                        subscriptionType ===
+                        "channel.channel_points_custom_reward_redemption.add"
+                    ) {
+
+                        await onRedemption?.(
+                            event
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // ==================================
+                    // Chat message
+                    // ==================================
+
+                    if (
+                        subscriptionType ===
+                        "channel.chat.message"
+                    ) {
+
+                        await onChatMessage?.(
+                            event
+                        );
+
+
+                        return;
+
+                    }
+
                 }
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to process Twitch EventSub message:",
+                    error
+                );
+
             }
-        } catch (error) {
+
+        }
+    );
+
+
+    socket.on(
+        "error",
+        error => {
+
             console.error(
-                "Failed to process EventSub message:",
+                "Twitch EventSub WebSocket error:",
                 error
             );
+
         }
-    });
+    );
 
-    socket.on("error", (error) => {
-        console.error(
-            "EventSub WebSocket error:",
-            error
-        );
-    });
 
-    socket.on("close", (code, reason) => {
-        console.log(
-            "Disconnected from Twitch EventSub."
-        );
+    socket.on(
+        "close",
+        () => {
 
-        console.log(
-            "Close code:",
-            code
-        );
-
-        if (reason) {
-            console.log(
-                "Reason:",
-                reason.toString()
+            console.warn(
+                "Twitch EventSub WebSocket disconnected."
             );
+
         }
-    });
+    );
+
 
     return socket;
 }
+
+
+// ======================================================
+// Subscribe to Channel Point redemptions
+// ======================================================
 
 async function subscribeToRedemptions(
     twitchSession,
     sessionId
 ) {
-    console.log(
-        "Subscribing to Channel Point redemptions..."
-    );
 
-    const response = await fetch(
-        "https://api.twitch.tv/helix/eventsub/subscriptions",
-        {
-            method: "POST",
+    const response =
+        await fetch(
+            "https://api.twitch.tv/helix/eventsub/subscriptions",
+            {
+                method:
+                    "POST",
 
-            headers: {
-                "Client-ID":
-                    config.twitch.clientId,
+                headers: {
+                    "Client-ID":
+                        config.twitch.clientId,
 
-                "Authorization":
-                    `Bearer ${twitchSession.accessToken}`,
+                    "Authorization":
+                        `Bearer ${twitchSession.accessToken}`,
 
-                "Content-Type":
-                    "application/json"
-            },
-
-            body: JSON.stringify({
-                type:
-                    "channel.channel_points_custom_reward_redemption.add",
-
-                version:
-                    "1",
-
-                condition: {
-                    broadcaster_user_id:
-                        twitchSession.broadcaster.id
+                    "Content-Type":
+                        "application/json"
                 },
 
-                transport: {
-                    method:
-                        "websocket",
+                body:
+                    JSON.stringify({
+                        type:
+                            "channel.channel_points_custom_reward_redemption.add",
 
-                    session_id:
-                        sessionId
-                }
-            })
-        }
-    );
+                        version:
+                            "1",
 
-    const data = await response.json();
+                        condition: {
+                            broadcaster_user_id:
+                                twitchSession.broadcaster.id
+                        },
 
-    if (!response.ok) {
-        console.error(
-            "Failed to create EventSub subscription:",
-            data
+                        transport: {
+                            method:
+                                "websocket",
+
+                            session_id:
+                                sessionId
+                        }
+                    })
+            }
         );
 
-        return;
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            `Failed to subscribe to Channel Point redemptions: ${JSON.stringify(data)}`
+        );
+
     }
 
+
     console.log(
-        "Subscribed to Channel Point redemptions ✓"
+        "Channel Point redemption subscription ready ✓"
     );
+
 }

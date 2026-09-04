@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import { registerAuthRoutes } from "./twitch/auth.js";
 import { connectToEventSub } from "./twitch/eventSub.js";
 import { getOrCreateEggReward } from "./twitch/api.js";
+import { sendChatMessage } from "./twitch/chat.js";
 
 import { rollEgg } from "./gacha/rollEgg.js";
 import { eggs } from "./gacha/eggs.js";
@@ -121,12 +122,6 @@ app.use(
 // ======================================================
 // Overlay WebSocket
 // ======================================================
-//
-// Uses the same HTTP server as Express.
-// The WebSocket itself is available at:
-//
-// ws://localhost:3000/overlay-ws
-//
 
 startOverlayServer(
     server
@@ -158,7 +153,7 @@ registerAuthRoutes(
 
 
         // ==============================================
-        // Create or find EggGacha reward
+        // EggGacha reward
         // ==============================================
 
         const reward =
@@ -182,7 +177,7 @@ registerAuthRoutes(
 
 
         // ==============================================
-        // Close previous EventSub connection
+        // Close old EventSub connection
         // ==============================================
 
         if (eventSubSocket) {
@@ -208,15 +203,25 @@ registerAuthRoutes(
 
 
         // ==============================================
-        // Connect Twitch EventSub
+        // EventSub
         // ==============================================
 
         eventSubSocket =
             connectToEventSub(
                 twitchSession,
+
                 async event => {
 
                     await handleRedemption(
+                        event
+                    );
+
+                },
+
+                async event => {
+
+                    await handleChatMessage(
+                        twitchSession,
                         event
                     );
 
@@ -233,7 +238,7 @@ registerAuthRoutes(
 
 
 // ======================================================
-// Handle EggGacha redemption
+// Handle egg redemption
 // ======================================================
 
 async function handleRedemption(
@@ -241,10 +246,6 @@ async function handleRedemption(
 ) {
 
     try {
-
-        // ==============================================
-        // Ignore other Channel Point rewards
-        // ==============================================
 
         if (
             !eggRewardId ||
@@ -256,17 +257,9 @@ async function handleRedemption(
         }
 
 
-        // ==============================================
-        // Roll egg
-        // ==============================================
-
         const egg =
             rollEgg();
 
-
-        // ==============================================
-        // Get or create viewer
-        // ==============================================
 
         const user =
             getOrCreateUser(
@@ -274,10 +267,6 @@ async function handleRedemption(
                 event.user_name
             );
 
-
-        // ==============================================
-        // Add egg to collection
-        // ==============================================
 
         const collectionEntry =
             addEggToCollection(
@@ -295,10 +284,6 @@ async function handleRedemption(
         );
 
 
-        // ==============================================
-        // Send result to overlay
-        // ==============================================
-
         sendEggRollToOverlay(
             user,
             egg,
@@ -309,6 +294,107 @@ async function handleRedemption(
 
         console.error(
             "Failed to handle EggGacha redemption:",
+            error
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// Handle Twitch chat
+// ======================================================
+
+async function handleChatMessage(
+    twitchSession,
+    event
+) {
+
+    try {
+
+        const text =
+            event.message
+                ?.text
+                ?.trim()
+                ?.toLowerCase();
+
+
+        if (
+            text !== "!eggs" &&
+            text !== "!collection"
+        ) {
+
+            return;
+
+        }
+
+
+        console.log(
+            `${event.chatter_user_name} used ${text}`
+        );
+
+
+        const user =
+            getUserByTwitchId(
+                event.chatter_user_id
+            );
+
+
+        // ==============================================
+        // Viewer has no EggGacha collection yet
+        // ==============================================
+
+        if (!user) {
+
+            await sendChatMessage(
+                twitchSession,
+                `@${event.chatter_user_name}, you don't have an EggGacha collection yet. Redeem the 🥚 Roll an Egg reward first!`
+            );
+
+
+            return;
+
+        }
+
+
+        // ==============================================
+        // Build collection link
+        // ==============================================
+
+        const publicUrl =
+            (
+                process.env.PUBLIC_URL ??
+                `http://localhost:${process.env.PORT || 3000}`
+            )
+                .replace(
+                    /\/$/,
+                    ""
+                );
+
+
+        const collectionUrl =
+            `${publicUrl}/collection/${encodeURIComponent(user.display_name)}`;
+
+
+        // ==============================================
+        // Send collection
+        // ==============================================
+
+        await sendChatMessage(
+            twitchSession,
+            `@${event.chatter_user_name}, your EggGacha collection: ${collectionUrl}`
+        );
+
+
+        console.log(
+            `Collection link sent to ${event.chatter_user_name}`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Failed to handle Twitch chat command:",
             error
         );
 
@@ -371,10 +457,6 @@ app.get(
                 req.params.viewer;
 
 
-            // ==========================================
-            // Find viewer
-            // ==========================================
-
             let user;
 
 
@@ -399,10 +481,6 @@ app.get(
             }
 
 
-            // ==========================================
-            // Viewer does not exist
-            // ==========================================
-
             if (!user) {
 
                 return res
@@ -415,33 +493,20 @@ app.get(
             }
 
 
-            // ==========================================
-            // Load collection
-            // ==========================================
-
             const collection =
                 getUserCollection(
                     user.id
                 );
 
 
-            // ==========================================
-            // Calculate statistics
-            // ==========================================
-
             const totalEggs =
                 collection.reduce(
                     (
                         total,
                         entry
-                    ) => {
-
-                        return (
-                            total +
-                            entry.quantity
-                        );
-
-                    },
+                    ) =>
+                        total +
+                        entry.quantity,
                     0
                 );
 
@@ -465,10 +530,6 @@ app.get(
                     )
                     : 0;
 
-
-            // ==========================================
-            // Build complete egg list
-            // ==========================================
 
             const eggCollection =
                 eggs.map(
@@ -515,10 +576,6 @@ app.get(
                     }
                 );
 
-
-            // ==========================================
-            // Return collection
-            // ==========================================
 
             res.json({
 
@@ -606,12 +663,18 @@ server.listen(
             `Overlay: http://localhost:${PORT}/overlay`
         );
 
+        console.log("");
+
         console.log(
-            `Overlay WebSocket: ws://localhost:${PORT}/overlay-ws`
+            "Chat commands:"
         );
 
         console.log(
-            `Assets: http://localhost:${PORT}/assets`
+            "!eggs"
+        );
+
+        console.log(
+            "!collection"
         );
 
         console.log("");

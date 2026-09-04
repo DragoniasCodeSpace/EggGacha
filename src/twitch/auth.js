@@ -114,7 +114,11 @@ export function registerAuthRoutes(
 
             authUrl.searchParams.set(
                 "scope",
-                "channel:manage:redemptions"
+                [
+                    "channel:manage:redemptions",
+                    "user:read:chat",
+                    "user:write:chat"
+                ].join(" ")
             );
 
 
