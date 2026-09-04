@@ -85,6 +85,17 @@ app.use(
 
 
 app.use(
+    "/auth-files",
+    express.static(
+        path.join(
+            __dirname,
+            "auth"
+        )
+    )
+);
+
+
+app.use(
     "/styles",
     express.static(
         path.join(
