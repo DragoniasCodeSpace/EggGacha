@@ -1,35 +1,60 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 
-let overlayClients = [];
+let overlayWss = null;
 
 export function startOverlayServer(server) {
-    const wss = new WebSocketServer({
+
+    overlayWss = new WebSocketServer({
         server,
         path: "/overlay-ws"
     });
 
-    wss.on("connection", (socket) => {
-        console.log("OBS overlay connected ✓");
+    overlayWss.on(
+        "connection",
+        socket => {
 
-        overlayClients.push(socket);
+            console.log("Overlay client connected ✓");
 
-        socket.on("close", () => {
-            overlayClients = overlayClients.filter(
-                client => client !== socket
+            socket.on(
+                "close",
+                () => {
+                    console.log("Overlay client disconnected");
+                }
             );
 
-            console.log("OBS overlay disconnected.");
-        });
-    });
+            socket.on(
+                "error",
+                error => {
+                    console.error(
+                        "Overlay WebSocket error:",
+                        error
+                    );
+                }
+            );
 
-    return wss;
+        }
+    );
+
+    console.log(
+        "Overlay WebSocket ready at /overlay-ws ✓"
+    );
 }
+
 
 export function sendEggRollToOverlay(
     user,
     egg,
     quantity
 ) {
+
+    if (!overlayWss) {
+        console.warn(
+            "Overlay WebSocket server has not been started."
+        );
+
+        return;
+    }
+
     const message = JSON.stringify({
         type: "egg_roll",
 
@@ -51,9 +76,29 @@ export function sendEggRollToOverlay(
         }
     });
 
-    for (const client of overlayClients) {
-        if (client.readyState === client.OPEN) {
-            client.send(message);
+
+    let sentTo = 0;
+
+
+    for (const client of overlayWss.clients) {
+
+        if (
+            client.readyState ===
+            WebSocket.OPEN
+        ) {
+
+            client.send(
+                message
+            );
+
+            sentTo++;
+
         }
+
     }
+
+
+    console.log(
+        `Egg roll sent to ${sentTo} overlay client(s).`
+    );
 }

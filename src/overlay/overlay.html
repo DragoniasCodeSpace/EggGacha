@@ -53,7 +53,13 @@
 
 </div>
 
+
 <script>
+
+    // =====================================================
+    // Elements
+    // =====================================================
+
     const overlay =
         document.getElementById(
             "overlay"
@@ -115,56 +121,111 @@
 
     const socket =
         new WebSocket(
-            `${protocol}//${window.location.host}`
+            `${protocol}//${window.location.host}/overlay-ws`
         );
 
+
+    // =====================================================
+    // WebSocket connected
+    // =====================================================
 
     socket.addEventListener(
         "open",
         () => {
 
             console.log(
-                "EggGacha overlay connected."
+                "EggGacha overlay connected ✓"
             );
 
         }
     );
 
+
+    // =====================================================
+    // Receive EggGacha messages
+    // =====================================================
 
     socket.addEventListener(
         "message",
         event => {
 
-            const message =
-                JSON.parse(
-                    event.data
+            try {
+
+                const message =
+                    JSON.parse(
+                        event.data
+                    );
+
+
+                console.log(
+                    "Overlay message received:",
+                    message
                 );
 
 
-            if (
-                message.type !==
-                "egg_roll"
-            ) {
-                return;
+                // Ignore messages that are not egg rolls.
+
+                if (
+                    message.type !==
+                    "egg_roll"
+                ) {
+
+                    return;
+
+                }
+
+
+                // Add the roll to the queue.
+
+                queue.push(
+                    message
+                );
+
+
+                // Start playing if nothing is
+                // currently being displayed.
+
+                playNext();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to process overlay message:",
+                    error
+                );
+
             }
-
-
-            queue.push(
-                message
-            );
-
-
-            playNext();
 
         }
     );
 
 
+    // =====================================================
+    // WebSocket error
+    // =====================================================
+
+    socket.addEventListener(
+        "error",
+        error => {
+
+            console.error(
+                "EggGacha overlay WebSocket error:",
+                error
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // WebSocket disconnected
+    // =====================================================
+
     socket.addEventListener(
         "close",
         () => {
 
-            console.log(
+            console.warn(
                 "EggGacha overlay disconnected."
             );
 
@@ -192,18 +253,32 @@
         }
 
 
-        playing = true;
+        playing =
+            true;
 
 
-        await playRoll(
-            message
-        );
+        try {
+
+            await playRoll(
+                message
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to play egg roll:",
+                error
+            );
+
+        } finally {
+
+            playing =
+                false;
 
 
-        playing = false;
+            playNext();
 
-
-        playNext();
+        }
 
     }
 
@@ -212,7 +287,9 @@
     // Play egg roll
     // =====================================================
 
-    async function playRoll(message) {
+    async function playRoll(
+        message
+    ) {
 
         resetOverlay();
 
@@ -221,14 +298,26 @@
             message.egg.rarity;
 
 
+        // =================================================
+        // Apply rarity class
+        // =================================================
+
         overlay.classList.add(
             rolledRarity
         );
 
 
+        // =================================================
+        // Viewer
+        // =================================================
+
         username.textContent =
             message.user.displayName;
 
+
+        // =================================================
+        // Egg information
+        // =================================================
 
         eggName.textContent =
             message.egg.name;
@@ -238,12 +327,17 @@
             rolledRarity;
 
 
+        // =================================================
+        // Collection information
+        // =================================================
+
         if (
             message.collection.isNew
         ) {
 
             collectionStatus.textContent =
                 "NEW!";
+
 
             collectionStatus.classList.add(
                 "new"
@@ -257,6 +351,10 @@
         }
 
 
+        // =================================================
+        // Egg image
+        // =================================================
+
         if (
             message.egg.image
         ) {
@@ -267,10 +365,18 @@
         }
 
 
+        // =================================================
+        // Show overlay
+        // =================================================
+
         overlay.classList.add(
             "visible"
         );
 
+
+        // =================================================
+        // Start shake
+        // =================================================
 
         eggPlaceholder.classList.add(
             "shake"
@@ -288,6 +394,10 @@
         );
 
 
+        // =================================================
+        // Stop shaking
+        // =================================================
+
         eggPlaceholder.classList.remove(
             "shake"
         );
@@ -297,35 +407,59 @@
             "0";
 
 
+        // =================================================
+        // Reveal flash
+        // =================================================
+
         flash.classList.add(
             "flash"
         );
 
+
+        // =================================================
+        // Reveal egg
+        // =================================================
 
         eggImage.classList.add(
             "reveal"
         );
 
 
-        await wait(750);
+        await wait(
+            750
+        );
 
+
+        // =================================================
+        // Rarity-specific animation
+        // =================================================
 
         addRarityAnimation(
             rolledRarity
         );
 
 
+        // =================================================
+        // Display egg
+        // =================================================
+
         await wait(
             timings.display
         );
 
+
+        // =================================================
+        // Hide overlay
+        // =================================================
 
         overlay.classList.remove(
             "visible"
         );
 
 
-        await wait(400);
+        await wait(
+            400
+        );
 
 
         resetOverlay();
@@ -482,12 +616,14 @@
         eggPlaceholder.className =
             "";
 
+
         eggPlaceholder.style.opacity =
             "1";
 
 
         eggImage.className =
             "";
+
 
         eggImage.removeAttribute(
             "src"
@@ -505,11 +641,14 @@
         username.textContent =
             "";
 
+
         eggName.textContent =
             "";
 
+
         rarity.textContent =
             "";
+
 
         collectionStatus.textContent =
             "";
@@ -521,7 +660,9 @@
     // Utility
     // =====================================================
 
-    function wait(milliseconds) {
+    function wait(
+        milliseconds
+    ) {
 
         return new Promise(
             resolve =>
@@ -532,6 +673,7 @@
         );
 
     }
+
 </script>
 
 </body>

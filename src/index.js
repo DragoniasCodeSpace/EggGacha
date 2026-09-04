@@ -5,8 +5,6 @@ import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { config } from "./config/config.js";
-
 import { registerAuthRoutes } from "./twitch/auth.js";
 import { connectToEventSub } from "./twitch/eventSub.js";
 import { getOrCreateEggReward } from "./twitch/api.js";
@@ -32,17 +30,31 @@ import {
 
 
 // ======================================================
-// App setup
+// Paths
 // ======================================================
 
-const app = express();
-const server = http.createServer(app);
-
 const __filename =
-    fileURLToPath(import.meta.url);
+    fileURLToPath(
+        import.meta.url
+    );
 
 const __dirname =
-    path.dirname(__filename);
+    path.dirname(
+        __filename
+    );
+
+
+// ======================================================
+// Express + HTTP server
+// ======================================================
+
+const app =
+    express();
+
+const server =
+    http.createServer(
+        app
+    );
 
 
 // ======================================================
@@ -107,29 +119,29 @@ app.use(
 
 
 // ======================================================
-// OBS overlay WebSocket
+// Overlay WebSocket
+// ======================================================
+//
+// Uses the same HTTP server as Express.
+// The WebSocket itself is available at:
+//
+// ws://localhost:3000/overlay-ws
+//
+
+startOverlayServer(
+    server
+);
+
+
+// ======================================================
+// Twitch state
 // ======================================================
 
-startOverlayServer(server);
+let eventSubSocket =
+    null;
 
-
-// ======================================================
-// Application state
-// ======================================================
-
-let eventSubSocket = null;
-let eggRewardId = null;
-
-
-// ======================================================
-// Startup
-// ======================================================
-
-console.log("");
-console.log("=======================");
-console.log("      🥚 EggGacha");
-console.log("=======================");
-console.log("");
+let eggRewardId =
+    null;
 
 
 // ======================================================
@@ -138,115 +150,175 @@ console.log("");
 
 registerAuthRoutes(
     app,
-    async (twitchSession) => {
+    async twitchSession => {
 
         console.log(
-            `Twitch connected: ${twitchSession.broadcaster.displayName}`
+            `Connecting EggGacha for ${twitchSession.broadcaster.displayName}...`
         );
 
 
-        const eggReward =
+        // ==============================================
+        // Create or find EggGacha reward
+        // ==============================================
+
+        const reward =
             await getOrCreateEggReward(
                 twitchSession
             );
 
 
         eggRewardId =
-            eggReward.id;
+            reward.id;
 
 
         console.log(
-            `Listening for EggGacha reward: ${eggReward.title}`
+            "EggGacha reward ready ✓"
+        );
+
+        console.log(
+            "Reward ID:",
+            eggRewardId
         );
 
 
+        // ==============================================
+        // Close previous EventSub connection
+        // ==============================================
+
         if (eventSubSocket) {
-            eventSubSocket.close();
+
+            try {
+
+                eventSubSocket.close();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to close old EventSub connection:",
+                    error
+                );
+
+            }
+
+
+            eventSubSocket =
+                null;
+
         }
 
+
+        // ==============================================
+        // Connect Twitch EventSub
+        // ==============================================
 
         eventSubSocket =
             connectToEventSub(
                 twitchSession,
-                handleRedemption
+                async event => {
+
+                    await handleRedemption(
+                        event
+                    );
+
+                }
             );
+
+
+        console.log(
+            "EggGacha Twitch connection ready ✓"
+        );
+
     }
 );
 
 
 // ======================================================
-// Twitch Channel Point redemption
+// Handle EggGacha redemption
 // ======================================================
 
-async function handleRedemption(event) {
+async function handleRedemption(
+    event
+) {
 
-    if (
-        event.reward.id !==
-        eggRewardId
-    ) {
-        return;
+    try {
+
+        // ==============================================
+        // Ignore other Channel Point rewards
+        // ==============================================
+
+        if (
+            !eggRewardId ||
+            event.reward?.id !== eggRewardId
+        ) {
+
+            return;
+
+        }
+
+
+        // ==============================================
+        // Roll egg
+        // ==============================================
+
+        const egg =
+            rollEgg();
+
+
+        // ==============================================
+        // Get or create viewer
+        // ==============================================
+
+        const user =
+            getOrCreateUser(
+                event.user_id,
+                event.user_name
+            );
+
+
+        // ==============================================
+        // Add egg to collection
+        // ==============================================
+
+        const collectionEntry =
+            addEggToCollection(
+                user.id,
+                egg.id
+            );
+
+
+        console.log(
+            `${user.display_name} rolled ${egg.name}`
+        );
+
+        console.log(
+            `Owned: ${collectionEntry.quantity}`
+        );
+
+
+        // ==============================================
+        // Send result to overlay
+        // ==============================================
+
+        sendEggRollToOverlay(
+            user,
+            egg,
+            collectionEntry.quantity
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Failed to handle EggGacha redemption:",
+            error
+        );
+
     }
 
-
-    const egg =
-        rollEgg();
-
-
-    const user =
-        getOrCreateUser(
-            event.user_id,
-            event.user_name
-        );
-
-
-    const collectionEntry =
-        addEggToCollection(
-            user.id,
-            egg.id
-        );
-
-
-    console.log("");
-    console.log("🥚 Egg rolled!");
-
-    console.log(
-        "Viewer:",
-        user.display_name
-    );
-
-    console.log(
-        "Viewer ID:",
-        event.user_id
-    );
-
-    console.log(
-        "Egg:",
-        egg.name
-    );
-
-    console.log(
-        "Rarity:",
-        egg.rarity
-    );
-
-    console.log(
-        "Owned:",
-        collectionEntry.quantity
-    );
-
-    console.log("");
-
-
-    sendEggRollToOverlay(
-        user,
-        egg,
-        collectionEntry.quantity
-    );
 }
 
 
 // ======================================================
-// OBS overlay page
+// Overlay page
 // ======================================================
 
 app.get(
@@ -260,6 +332,7 @@ app.get(
                 "overlay.html"
             )
         );
+
     }
 );
 
@@ -279,6 +352,7 @@ app.get(
                 "collection.html"
             )
         );
+
     }
 );
 
@@ -291,184 +365,262 @@ app.get(
     "/api/collection/:viewer",
     (req, res) => {
 
-        const viewer =
-            req.params.viewer;
+        try {
+
+            const viewer =
+                req.params.viewer;
 
 
-        let user;
+            // ==========================================
+            // Find viewer
+            // ==========================================
+
+            let user;
 
 
-        if (/^\d+$/.test(viewer)) {
-
-            user =
-                getUserByTwitchId(
+            if (
+                /^\d+$/.test(
                     viewer
+                )
+            ) {
+
+                user =
+                    getUserByTwitchId(
+                        viewer
+                    );
+
+            } else {
+
+                user =
+                    getUserByDisplayName(
+                        viewer
+                    );
+
+            }
+
+
+            // ==========================================
+            // Viewer does not exist
+            // ==========================================
+
+            if (!user) {
+
+                return res
+                    .status(404)
+                    .json({
+                        error:
+                            "Collection not found."
+                    });
+
+            }
+
+
+            // ==========================================
+            // Load collection
+            // ==========================================
+
+            const collection =
+                getUserCollection(
+                    user.id
                 );
 
-        } else {
 
-            user =
-                getUserByDisplayName(
-                    viewer
+            // ==========================================
+            // Calculate statistics
+            // ==========================================
+
+            const totalEggs =
+                collection.reduce(
+                    (
+                        total,
+                        entry
+                    ) => {
+
+                        return (
+                            total +
+                            entry.quantity
+                        );
+
+                    },
+                    0
                 );
 
-        }
+
+            const uniqueEggs =
+                collection.length;
 
 
-        if (!user) {
+            const totalAvailable =
+                eggs.length;
 
-            return res
-                .status(404)
+
+            const completion =
+                totalAvailable > 0
+                    ? Math.round(
+                        (
+                            uniqueEggs /
+                            totalAvailable
+                        ) *
+                        100
+                    )
+                    : 0;
+
+
+            // ==========================================
+            // Build complete egg list
+            // ==========================================
+
+            const eggCollection =
+                eggs.map(
+                    egg => {
+
+                        const collectionEntry =
+                            collection.find(
+                                entry =>
+                                    entry.egg_id ===
+                                    egg.id
+                            );
+
+
+                        return {
+
+                            id:
+                                egg.id,
+
+                            name:
+                                egg.name,
+
+                            rarity:
+                                egg.rarity,
+
+                            image:
+                                egg.image,
+
+                            unlocked:
+                                Boolean(
+                                    collectionEntry
+                                ),
+
+                            quantity:
+                                collectionEntry
+                                    ?.quantity ?? 0,
+
+                            firstObtainedAt:
+                                collectionEntry
+                                    ?.first_obtained_at ??
+                                null
+
+                        };
+
+                    }
+                );
+
+
+            // ==========================================
+            // Return collection
+            // ==========================================
+
+            res.json({
+
+                user: {
+
+                    twitchUserId:
+                        user.twitch_user_id,
+
+                    displayName:
+                        user.display_name
+
+                },
+
+                stats: {
+
+                    totalEggs,
+
+                    uniqueEggs,
+
+                    totalAvailable,
+
+                    completion
+
+                },
+
+                eggs:
+                    eggCollection
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load collection:",
+                error
+            );
+
+
+            res
+                .status(500)
                 .json({
                     error:
-                        "Viewer not found."
+                        "Failed to load collection."
                 });
 
         }
 
-
-        const collection =
-            getUserCollection(
-                user.id
-            );
-
-
-        // ==================================================
-        // Collection statistics
-        // ==================================================
-
-        const totalEggs =
-            collection.reduce(
-                (
-                    total,
-                    entry
-                ) =>
-                    total +
-                    entry.quantity,
-                0
-            );
-
-
-        const uniqueEggs =
-            collection.filter(
-                entry =>
-                    entry.egg
-            ).length;
-
-
-        const totalAvailable =
-            eggs.length;
-
-
-        const completion =
-            totalAvailable === 0
-                ? 0
-                : Math.round(
-                    (
-                        uniqueEggs /
-                        totalAvailable
-                    ) * 100
-                );
-
-
-        // ==================================================
-        // Complete egg list
-        // ==================================================
-
-        const collectionEggs =
-            eggs.map(
-                egg => {
-
-                    const collectionEntry =
-                        collection.find(
-                            entry =>
-                                entry.egg_id ===
-                                egg.id
-                        );
-
-
-                    return {
-                        id:
-                            egg.id,
-
-                        name:
-                            egg.name,
-
-                        rarity:
-                            egg.rarity,
-
-                        image:
-                            egg.image,
-
-                        unlocked:
-                            Boolean(
-                                collectionEntry
-                            ),
-
-                        quantity:
-                            collectionEntry
-                                ?.quantity ?? 0,
-
-                        firstObtainedAt:
-                            collectionEntry
-                                ?.first_obtained_at
-                                ?? null
-                    };
-                }
-            );
-
-
-        // ==================================================
-        // Response
-        // ==================================================
-
-        res.json({
-            user: {
-                twitchUserId:
-                    user.twitch_user_id,
-
-                displayName:
-                    user.display_name
-            },
-
-            stats: {
-                totalEggs,
-                uniqueEggs,
-                totalAvailable,
-                completion
-            },
-
-            eggs:
-                collectionEggs
-        });
     }
 );
 
 
 // ======================================================
-// Start server
+// Start EggGacha
 // ======================================================
 
+const PORT =
+    process.env.PORT ||
+    3000;
+
+
 server.listen(
-    config.server.port,
+    PORT,
     () => {
 
+        console.log("");
         console.log(
-            `EggGacha running on http://localhost:${config.server.port}`
+            "========================================"
         );
 
         console.log(
-            `Overlay: http://localhost:${config.server.port}/overlay`
+            "          EggGacha is running"
         );
 
         console.log(
-            `Assets: http://localhost:${config.server.port}/assets`
+            "========================================"
         );
 
         console.log("");
+
         console.log(
-            "Login with Twitch to start."
+            `App: http://localhost:${PORT}/`
         );
+
+        console.log(
+            `Overlay: http://localhost:${PORT}/overlay`
+        );
+
+        console.log(
+            `Overlay WebSocket: ws://localhost:${PORT}/overlay-ws`
+        );
+
+        console.log(
+            `Assets: http://localhost:${PORT}/assets`
+        );
+
         console.log("");
+
+        console.log(
+            "Open the app and connect your Twitch account."
+        );
+
+        console.log("");
+
     }
 );
