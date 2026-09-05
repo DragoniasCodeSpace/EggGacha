@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 
 import { config } from "../config/config.js";
 import { getTwitchUser } from "./api.js";
+import { saveTwitchSession } from "./session.js";
 
 
 // ======================================================
@@ -320,6 +321,11 @@ export function registerAuthRoutes(
                     }
 
                 };
+
+
+                saveTwitchSession(
+                    twitchSession
+                );
 
 
                 console.log(

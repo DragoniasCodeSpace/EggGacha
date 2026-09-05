@@ -1,4 +1,5 @@
 import { config } from "../config/config.js";
+import {twitchFetch} from "./session.js";
 
 
 // ======================================================
@@ -11,7 +12,8 @@ export async function subscribeToChat(
 ) {
 
     const response =
-        await fetch(
+        await twitchFetch(
+            twitchSession,
             "https://api.twitch.tv/helix/eventsub/subscriptions",
             {
                 method: "POST",
@@ -87,7 +89,8 @@ export async function sendChatMessage(
 ) {
 
     const response =
-        await fetch(
+        await twitchFetch(
+            twitchSession,
             "https://api.twitch.tv/helix/chat/messages",
             {
                 method: "POST",

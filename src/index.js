@@ -10,8 +10,17 @@ import { connectToEventSub } from "./twitch/eventSub.js";
 import { getOrCreateEggReward } from "./twitch/api.js";
 import { sendChatMessage } from "./twitch/chat.js";
 
+import {
+    loadTwitchSession,
+    validateTwitchSession,
+    startTwitchSessionValidation,
+    deleteTwitchSession
+} from "./twitch/session.js";
+
 import { rollEgg } from "./gacha/rollEgg.js";
 import { eggs } from "./gacha/eggs.js";
+
+import { config } from "./config/config.js";
 
 import {
     getOrCreateUser,
@@ -138,6 +147,184 @@ let eventSubSocket =
 let eggRewardId =
     null;
 
+let stopTokenValidation =
+    null;
+
+
+// ======================================================
+// Start Twitch integration
+// ======================================================
+//
+// Both:
+//
+// 1. A fresh Twitch OAuth login
+// 2. A restored saved Twitch session
+//
+// go through this function.
+//
+
+async function startTwitchIntegration(
+    twitchSession
+) {
+
+    console.log(
+        `Connecting EggGacha for ${twitchSession.broadcaster.displayName}...`
+    );
+
+
+    // ==================================================
+    // Stop previous token validator
+    // ==================================================
+
+    if (stopTokenValidation) {
+
+        stopTokenValidation();
+
+        stopTokenValidation =
+            null;
+
+    }
+
+
+    // ==================================================
+    // Close previous EventSub connection
+    // ==================================================
+
+    if (eventSubSocket) {
+
+        try {
+
+            eventSubSocket.close();
+
+        } catch (error) {
+
+            console.error(
+                "Failed to close old EventSub connection:",
+                error
+            );
+
+        }
+
+
+        eventSubSocket =
+            null;
+
+    }
+
+
+    // ==================================================
+    // EggGacha reward
+    // ==================================================
+
+    const reward =
+        await getOrCreateEggReward(
+            twitchSession
+        );
+
+
+    eggRewardId =
+        reward.id;
+
+
+    console.log(
+        "EggGacha reward ready ✓"
+    );
+
+
+    console.log(
+        "Reward ID:",
+        eggRewardId
+    );
+
+
+    // ==================================================
+    // EventSub
+    // ==================================================
+
+    eventSubSocket =
+        connectToEventSub(
+            twitchSession,
+
+            async event => {
+
+                await handleRedemption(
+                    event
+                );
+
+            },
+
+            async event => {
+
+                await handleChatMessage(
+                    twitchSession,
+                    event
+                );
+
+            }
+        );
+
+
+    // ==================================================
+    // Hourly Twitch token validation
+    // ==================================================
+
+    stopTokenValidation =
+        startTwitchSessionValidation(
+            twitchSession,
+
+            async error => {
+
+                console.error(
+                    "Twitch session is no longer valid:",
+                    error
+                );
+
+
+                console.log(
+                    "Please reconnect Twitch from the EggGacha page."
+                );
+
+
+                if (eventSubSocket) {
+
+                    try {
+
+                        eventSubSocket.close();
+
+                    } catch (closeError) {
+
+                        console.error(
+                            "Failed to close EventSub connection:",
+                            closeError
+                        );
+
+                    }
+
+
+                    eventSubSocket =
+                        null;
+
+                }
+
+
+                eggRewardId =
+                    null;
+
+
+                deleteTwitchSession(
+                    twitchSession.broadcaster.id
+                );
+
+            }
+        );
+
+
+    console.log(
+        "EggGacha Twitch connection ready ✓"
+    );
+
+}
+
 
 // ======================================================
 // Twitch authentication
@@ -145,92 +332,11 @@ let eggRewardId =
 
 registerAuthRoutes(
     app,
+
     async twitchSession => {
 
-        console.log(
-            `Connecting EggGacha for ${twitchSession.broadcaster.displayName}...`
-        );
-
-
-        // ==============================================
-        // EggGacha reward
-        // ==============================================
-
-        const reward =
-            await getOrCreateEggReward(
-                twitchSession
-            );
-
-
-        eggRewardId =
-            reward.id;
-
-
-        console.log(
-            "EggGacha reward ready ✓"
-        );
-
-        console.log(
-            "Reward ID:",
-            eggRewardId
-        );
-
-
-        // ==============================================
-        // Close old EventSub connection
-        // ==============================================
-
-        if (eventSubSocket) {
-
-            try {
-
-                eventSubSocket.close();
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to close old EventSub connection:",
-                    error
-                );
-
-            }
-
-
-            eventSubSocket =
-                null;
-
-        }
-
-
-        // ==============================================
-        // EventSub
-        // ==============================================
-
-        eventSubSocket =
-            connectToEventSub(
-                twitchSession,
-
-                async event => {
-
-                    await handleRedemption(
-                        event
-                    );
-
-                },
-
-                async event => {
-
-                    await handleChatMessage(
-                        twitchSession,
-                        event
-                    );
-
-                }
-            );
-
-
-        console.log(
-            "EggGacha Twitch connection ready ✓"
+        await startTwitchIntegration(
+            twitchSession
         );
 
     }
@@ -279,6 +385,7 @@ async function handleRedemption(
             `${user.display_name} rolled ${egg.name}`
         );
 
+
         console.log(
             `Owned: ${collectionEntry.quantity}`
         );
@@ -321,8 +428,9 @@ async function handleChatMessage(
 
 
         if (
-            text !== "!eggs" &&
-            text !== "!collection"
+            !config.twitch.commands.collection.includes(
+                text
+            )
         ) {
 
             return;
@@ -349,7 +457,7 @@ async function handleChatMessage(
 
             await sendChatMessage(
                 twitchSession,
-                `@${event.chatter_user_name}, you don't have an EggGacha collection yet. Redeem the 🥚 Roll an Egg reward first!`
+                `@${event.chatter_user_name}, you don't have an EggGacha collection yet. Redeem the ${config.twitch.reward.title} reward first!`
             );
 
 
@@ -363,14 +471,10 @@ async function handleChatMessage(
         // ==============================================
 
         const publicUrl =
-            (
-                process.env.PUBLIC_URL ??
-                `http://localhost:${process.env.PORT || 3000}`
-            )
-                .replace(
-                    /\/$/,
-                    ""
-                );
+            config.server.publicUrl.replace(
+                /\/$/,
+                ""
+            );
 
 
         const collectionUrl =
@@ -628,12 +732,98 @@ app.get(
 
 
 // ======================================================
+// Restore saved Twitch session
+// ======================================================
+
+async function restoreSavedTwitchSession() {
+
+    const twitchSession =
+        loadTwitchSession();
+
+
+    if (!twitchSession) {
+
+        console.log(
+            "No saved Twitch session."
+        );
+
+
+        console.log(
+            "Connect Twitch from the EggGacha page."
+        );
+
+
+        return;
+
+    }
+
+
+    console.log(
+        `Saved Twitch session found for ${twitchSession.broadcaster.displayName}.`
+    );
+
+
+    try {
+
+        // validateTwitchSession() automatically tries
+        // the refresh token when the access token
+        // has expired.
+
+        await validateTwitchSession(
+            twitchSession
+        );
+
+
+        console.log(
+            "Saved Twitch session valid ✓"
+        );
+
+
+        await startTwitchIntegration(
+            twitchSession
+        );
+
+
+        console.log(
+            `Automatically connected to Twitch as ${twitchSession.broadcaster.displayName} ✓`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not restore Twitch session:",
+            error
+        );
+
+
+        deleteTwitchSession(
+            twitchSession.broadcaster.id
+        );
+
+
+        console.log(
+            "Open EggGacha and reconnect Twitch."
+        );
+
+    }
+
+}
+
+
+// ======================================================
 // Start EggGacha
 // ======================================================
 
 const PORT =
-    process.env.PORT ||
-    3000;
+    config.server.port;
+
+
+// Restore Twitch BEFORE starting the HTTP server.
+//
+// If there is no saved session this simply continues
+// normally and the user can connect through the UI.
+
+await restoreSavedTwitchSession();
 
 
 server.listen(
@@ -679,9 +869,19 @@ server.listen(
 
         console.log("");
 
-        console.log(
-            "Open the app and connect your Twitch account."
-        );
+        if (eggRewardId) {
+
+            console.log(
+                "Twitch connected automatically ✓"
+            );
+
+        } else {
+
+            console.log(
+                "Open the app and connect your Twitch account."
+            );
+
+        }
 
         console.log("");
 
