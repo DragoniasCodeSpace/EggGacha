@@ -88,8 +88,7 @@ body {
     text-align: center;
 
     text-shadow:
-        0 4px 12px
-        rgba(0, 0, 0, 0.9);
+        0 4px 12px rgba(0, 0, 0, 0.9);
 }
 
 
@@ -122,10 +121,7 @@ body {
     opacity: 1;
 
     filter:
-        drop-shadow(
-            0 12px 15px
-            rgba(0, 0, 0, 0.65)
-        );
+        drop-shadow(0 12px 15px rgba(0, 0, 0, 0.65));
 }
 
 
@@ -147,10 +143,7 @@ body {
         scale(0.55);
 
     filter:
-        drop-shadow(
-            0 12px 22px
-            rgba(0, 0, 0, 0.65)
-        );
+        drop-shadow(0 12px 22px rgba(0, 0, 0, 0.65));
 }
 
 
@@ -197,8 +190,7 @@ body {
     text-align: center;
 
     text-shadow:
-        0 4px 12px
-        rgba(0, 0, 0, 0.9);
+        0 4px 12px rgba(0, 0, 0, 0.9);
 }
 
 
@@ -234,8 +226,7 @@ body {
         7px 16px;
 
     border:
-        1px solid
-        var(--color-border-light);
+        1px solid var(--color-border-light);
 
     border-radius:
         999px;
@@ -277,32 +268,27 @@ body {
 
     0% {
         transform:
-            translateX(-7px)
-            rotate(-4deg);
+            translateX(-7px) rotate(-4deg);
     }
 
     25% {
         transform:
-            translateX(5px)
-            rotate(3deg);
+            translateX(5px) rotate(3deg);
     }
 
     50% {
         transform:
-            translateX(-4px)
-            rotate(-2deg);
+            translateX(-4px) rotate(-2deg);
     }
 
     75% {
         transform:
-            translateX(7px)
-            rotate(4deg);
+            translateX(7px) rotate(4deg);
     }
 
     100% {
         transform:
-            translateX(-7px)
-            rotate(-4deg);
+            translateX(-7px) rotate(-4deg);
     }
 
 }
@@ -314,14 +300,10 @@ body {
 
 #egg-image.reveal {
     animation:
-        eggReveal 0.7s
-        cubic-bezier(
-            0.2,
+        eggReveal 0.7s cubic-bezier(0.2,
             1.5,
             0.4,
-            1
-        )
-        forwards;
+            1) forwards;
 }
 
 
@@ -331,24 +313,21 @@ body {
         opacity: 0;
 
         transform:
-            scale(0.4)
-            rotate(-12deg);
+            scale(0.4) rotate(-12deg);
     }
 
     65% {
         opacity: 1;
 
         transform:
-            scale(1.14)
-            rotate(3deg);
+            scale(1.14) rotate(3deg);
     }
 
     100% {
         opacity: 1;
 
         transform:
-            scale(1)
-            rotate(0);
+            scale(1) rotate(0);
     }
 
 }
@@ -391,15 +370,25 @@ body {
 
 
 /* =====================================================
+   RARITY-SPECIFIC EGG ANIMATIONS
+   ===================================================== */
+
+#egg-image.float,
+#egg-image.mythic-pulse,
+#egg-image.ancient-pulse,
+#egg-image.eternal-pulse {
+    opacity: 1;
+}
+
+
+/* =====================================================
    FLOATING ANIMATION
    Legendary / Exotic
    ===================================================== */
 
 #egg-image.float {
     animation:
-        eggFloat 2.2s
-        ease-in-out
-        infinite;
+        eggFloat 2.2s ease-in-out infinite;
 }
 
 
@@ -425,9 +414,7 @@ body {
 
 #egg-image.mythic-pulse {
     animation:
-        mythicPulse 1.8s
-        ease-in-out
-        infinite;
+        mythicPulse 1.8s ease-in-out infinite;
 }
 
 
@@ -439,10 +426,7 @@ body {
             scale(1);
 
         filter:
-            drop-shadow(
-                0 0 18px
-                var(--rarity-mythic-glow)
-            );
+            drop-shadow(0 0 18px var(--rarity-mythic-glow));
     }
 
     50% {
@@ -450,10 +434,7 @@ body {
             scale(1.05);
 
         filter:
-            drop-shadow(
-                0 0 42px
-                var(--rarity-mythic-glow)
-            );
+            drop-shadow(0 0 42px var(--rarity-mythic-glow));
     }
 
 }
@@ -465,9 +446,7 @@ body {
 
 #egg-image.ancient-pulse {
     animation:
-        ancientPulse 1.7s
-        ease-in-out
-        infinite;
+        ancientPulse 1.7s ease-in-out infinite;
 }
 
 
@@ -479,10 +458,7 @@ body {
             scale(1);
 
         filter:
-            drop-shadow(
-                0 0 20px
-                var(--rarity-ancient-glow)
-            );
+            drop-shadow(0 0 20px var(--rarity-ancient-glow));
     }
 
     50% {
@@ -490,10 +466,7 @@ body {
             scale(1.06);
 
         filter:
-            drop-shadow(
-                0 0 48px
-                var(--rarity-ancient-glow)
-            );
+            drop-shadow(0 0 48px var(--rarity-ancient-glow));
     }
 
 }
@@ -505,9 +478,7 @@ body {
 
 #egg-image.eternal-pulse {
     animation:
-        eternalPulse 1.6s
-        ease-in-out
-        infinite;
+        eternalPulse 1.6s ease-in-out infinite;
 }
 
 
@@ -519,14 +490,7 @@ body {
             scale(1);
 
         filter:
-            drop-shadow(
-                0 0 20px
-                var(--rarity-eternal-pink)
-            )
-            drop-shadow(
-                0 0 30px
-                var(--rarity-eternal-blue)
-            );
+            drop-shadow(0 0 20px var(--rarity-eternal-pink)) drop-shadow(0 0 30px var(--rarity-eternal-blue));
     }
 
     50% {
@@ -534,14 +498,7 @@ body {
             scale(1.08);
 
         filter:
-            drop-shadow(
-                0 0 36px
-                var(--rarity-eternal-purple)
-            )
-            drop-shadow(
-                0 0 55px
-                var(--rarity-eternal-gold)
-            );
+            drop-shadow(0 0 36px var(--rarity-eternal-purple)) drop-shadow(0 0 55px var(--rarity-eternal-gold));
     }
 
 }
@@ -588,8 +545,7 @@ body {
         var(--rarity-rare);
 
     text-shadow:
-        0 0 15px
-        var(--rarity-rare-glow);
+        0 0 15px var(--rarity-rare-glow);
 }
 
 
@@ -608,8 +564,7 @@ body {
         var(--rarity-epic);
 
     text-shadow:
-        0 0 18px
-        var(--rarity-epic-glow);
+        0 0 18px var(--rarity-epic-glow);
 }
 
 
@@ -628,8 +583,7 @@ body {
         var(--rarity-legendary);
 
     text-shadow:
-        0 0 22px
-        var(--rarity-legendary-glow);
+        0 0 22px var(--rarity-legendary-glow);
 }
 
 
@@ -648,8 +602,7 @@ body {
         var(--rarity-exotic);
 
     text-shadow:
-        0 0 24px
-        var(--rarity-exotic-glow);
+        0 0 24px var(--rarity-exotic-glow);
 }
 
 
@@ -668,8 +621,7 @@ body {
         var(--rarity-mythic);
 
     text-shadow:
-        0 0 28px
-        var(--rarity-mythic-glow);
+        0 0 28px var(--rarity-mythic-glow);
 }
 
 
@@ -688,8 +640,7 @@ body {
         var(--rarity-ancient);
 
     text-shadow:
-        0 0 30px
-        var(--rarity-ancient-glow);
+        0 0 30px var(--rarity-ancient-glow);
 }
 
 
@@ -708,17 +659,12 @@ body {
         var(--rarity-eternal);
 
     text-shadow:
-        0 0 12px
-        var(--rarity-eternal-pink),
-        0 0 24px
-        var(--rarity-eternal-blue),
-        0 0 36px
-        var(--rarity-eternal-gold);
+        0 0 12px var(--rarity-eternal-pink),
+        0 0 24px var(--rarity-eternal-blue),
+        0 0 36px var(--rarity-eternal-gold);
 
     animation:
-        eternalText 1.8s
-        ease-in-out
-        infinite;
+        eternalText 1.8s ease-in-out infinite;
 }
 
 
@@ -733,18 +679,14 @@ body {
     0%,
     100% {
         text-shadow:
-            0 0 12px
-            var(--rarity-eternal-pink),
-            0 0 24px
-            var(--rarity-eternal-blue);
+            0 0 12px var(--rarity-eternal-pink),
+            0 0 24px var(--rarity-eternal-blue);
     }
 
     50% {
         text-shadow:
-            0 0 20px
-            var(--rarity-eternal-purple),
-            0 0 34px
-            var(--rarity-eternal-gold);
+            0 0 20px var(--rarity-eternal-purple),
+            0 0 34px var(--rarity-eternal-gold);
     }
 
 }

@@ -33,27 +33,19 @@ body {
         var(--color-background);
 
     background-image:
-        radial-gradient(
-            circle at 50% 0%,
+        radial-gradient(circle at 50% 0%,
             var(--background-glow-primary) 0%,
-            transparent 55%
-        ),
-        radial-gradient(
-            circle at 0% 45%,
+            transparent 55%),
+        radial-gradient(circle at 0% 45%,
             var(--background-glow-secondary) 0%,
-            transparent 50%
-        ),
-        radial-gradient(
-            circle at 100% 70%,
+            transparent 50%),
+        radial-gradient(circle at 100% 70%,
             var(--background-glow-accent) 0%,
-            transparent 50%
-        ),
-        linear-gradient(
-            180deg,
+            transparent 50%),
+        linear-gradient(180deg,
             var(--color-background-secondary) 0%,
             var(--color-background) 60%,
-            var(--color-background) 100%
-        );
+            var(--color-background) 100%);
 
     background-repeat:
         no-repeat;
@@ -72,10 +64,8 @@ body {
 
 .page {
     width:
-        min(
-            1400px,
-            calc(100% - 40px)
-        );
+        min(1400px,
+            calc(100% - 40px));
 
     margin:
         0 auto;
@@ -105,10 +95,7 @@ body {
         58px;
 
     filter:
-        drop-shadow(
-            0 0 18px
-            var(--color-primary-glow)
-        );
+        drop-shadow(0 0 18px var(--color-primary-glow));
 }
 
 .page-header h1 {
@@ -119,11 +106,9 @@ body {
         var(--color-text);
 
     font-size:
-        clamp(
-            32px,
+        clamp(32px,
             5vw,
-            54px
-        );
+            54px);
 
     font-weight:
         800;
@@ -132,8 +117,7 @@ body {
         -1px;
 
     text-shadow:
-        0 0 25px
-        var(--color-primary-glow);
+        0 0 25px var(--color-primary-glow);
 }
 
 .subtitle {
@@ -163,10 +147,8 @@ body {
         grid;
 
     grid-template-columns:
-        repeat(
-            3,
-            1fr
-        );
+        repeat(3,
+            1fr);
 
     gap:
         18px;
@@ -195,8 +177,7 @@ body {
         20px;
 
     border:
-        1px solid
-        var(--color-border);
+        1px solid var(--color-border);
 
     border-radius:
         18px;
@@ -222,8 +203,7 @@ body {
         800;
 
     text-shadow:
-        0 0 16px
-        var(--color-primary-glow);
+        0 0 16px var(--color-primary-glow);
 }
 
 .stat-label {
@@ -256,8 +236,7 @@ body {
         20px 22px;
 
     border:
-        1px solid
-        var(--color-border);
+        1px solid var(--color-border);
 
     border-radius:
         18px;
@@ -317,16 +296,13 @@ body {
         inherit;
 
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             var(--color-primary-dark),
             var(--color-primary),
-            var(--color-primary-light)
-        );
+            var(--color-primary-light));
 
     box-shadow:
-        0 0 15px
-        var(--color-primary-glow);
+        0 0 15px var(--color-primary-glow);
 
     transition:
         width 0.8s ease;
@@ -387,8 +363,7 @@ body {
         isolate;
 
     border:
-        1px solid
-        var(--color-border);
+        1px solid var(--color-border);
 
     border-radius:
         16px;
@@ -443,12 +418,10 @@ body {
         -1;
 
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--color-border-light),
-            transparent
-        );
+            transparent);
 }
 
 .rarity-title {
@@ -473,8 +446,7 @@ body {
         7px 12px;
 
     border:
-        1px solid
-        var(--color-border);
+        1px solid var(--color-border);
 
     border-radius:
         999px;
@@ -504,12 +476,10 @@ body {
 
 .rarity-common .rarity-header::before {
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-common),
-            transparent
-        );
+            transparent);
 }
 
 .rarity-common .rarity-title {
@@ -528,18 +498,15 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 18px
-        var(--rarity-uncommon-glow);
+        0 0 18px var(--rarity-uncommon-glow);
 }
 
 .rarity-uncommon .rarity-header::before {
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-uncommon),
-            transparent
-        );
+            transparent);
 }
 
 .rarity-uncommon .rarity-title {
@@ -558,18 +525,15 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 22px
-        var(--rarity-rare-glow);
+        0 0 22px var(--rarity-rare-glow);
 }
 
 .rarity-rare .rarity-header::before {
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-rare),
-            transparent
-        );
+            transparent);
 }
 
 .rarity-rare .rarity-title {
@@ -588,18 +552,15 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 25px
-        var(--rarity-epic-glow);
+        0 0 25px var(--rarity-epic-glow);
 }
 
 .rarity-epic .rarity-header::before {
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-epic),
-            transparent
-        );
+            transparent);
 
     opacity:
         0.22;
@@ -621,17 +582,14 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 28px
-        var(--rarity-legendary-glow);
+        0 0 28px var(--rarity-legendary-glow);
 }
 
 .rarity-legendary .rarity-header::before {
     background:
-        radial-gradient(
-            circle,
+        radial-gradient(circle,
             var(--rarity-legendary),
-            transparent 65%
-        );
+            transparent 65%);
 
     opacity:
         0.24;
@@ -642,8 +600,7 @@ body {
         var(--rarity-legendary);
 
     text-shadow:
-        0 0 15px
-        var(--rarity-legendary-glow);
+        0 0 15px var(--rarity-legendary-glow);
 }
 
 
@@ -657,18 +614,15 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 32px
-        var(--rarity-exotic-glow);
+        0 0 32px var(--rarity-exotic-glow);
 }
 
 .rarity-exotic .rarity-header::before {
     background:
-        linear-gradient(
-            100deg,
+        linear-gradient(100deg,
             transparent,
             var(--rarity-exotic),
-            transparent
-        );
+            transparent);
 
     opacity:
         0.26;
@@ -679,8 +633,7 @@ body {
         var(--rarity-exotic);
 
     text-shadow:
-        0 0 18px
-        var(--rarity-exotic-glow);
+        0 0 18px var(--rarity-exotic-glow);
 }
 
 
@@ -693,23 +646,17 @@ body {
         var(--rarity-mythic);
 
     background:
-        linear-gradient(
-            110deg,
+        linear-gradient(110deg,
             var(--color-card),
             var(--rarity-mythic-background),
-            var(--color-card)
-        );
+            var(--color-card));
 
     box-shadow:
         var(--shadow-medium),
-        0 0 38px
-        var(--rarity-mythic-glow);
+        0 0 38px var(--rarity-mythic-glow);
 
     animation:
-        mythicBanner
-        3s
-        ease-in-out
-        infinite;
+        mythicBanner 3s ease-in-out infinite;
 }
 
 .rarity-mythic .rarity-header::before {
@@ -717,22 +664,17 @@ body {
         200%;
 
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-mythic),
             var(--rarity-mythic-secondary),
-            transparent
-        );
+            transparent);
 
     opacity:
         0.22;
 
     animation:
-        energyMove
-        5s
-        linear
-        infinite;
+        energyMove 5s linear infinite;
 }
 
 .rarity-mythic .rarity-title {
@@ -740,8 +682,7 @@ body {
         var(--rarity-mythic);
 
     text-shadow:
-        0 0 20px
-        var(--rarity-mythic-glow);
+        0 0 20px var(--rarity-mythic-glow);
 }
 
 
@@ -754,23 +695,17 @@ body {
         var(--rarity-ancient);
 
     background:
-        linear-gradient(
-            110deg,
+        linear-gradient(110deg,
             var(--color-card),
             var(--rarity-ancient-background),
-            var(--color-card)
-        );
+            var(--color-card));
 
     box-shadow:
         var(--shadow-medium),
-        0 0 42px
-        var(--rarity-ancient-glow);
+        0 0 42px var(--rarity-ancient-glow);
 
     animation:
-        ancientBanner
-        2.8s
-        ease-in-out
-        infinite;
+        ancientBanner 2.8s ease-in-out infinite;
 }
 
 .rarity-ancient .rarity-header::before {
@@ -778,22 +713,17 @@ body {
         200%;
 
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-ancient-secondary),
             var(--rarity-ancient),
-            transparent
-        );
+            transparent);
 
     opacity:
         0.24;
 
     animation:
-        energyMove
-        4s
-        linear
-        infinite;
+        energyMove 4s linear infinite;
 }
 
 .rarity-ancient .rarity-title {
@@ -801,8 +731,7 @@ body {
         var(--rarity-ancient);
 
     text-shadow:
-        0 0 22px
-        var(--rarity-ancient-glow);
+        0 0 22px var(--rarity-ancient-glow);
 }
 
 
@@ -815,29 +744,23 @@ body {
         var(--rarity-eternal);
 
     background:
-        linear-gradient(
-            120deg,
+        linear-gradient(120deg,
             var(--color-card),
             var(--rarity-eternal-pink),
             var(--rarity-eternal-purple),
             var(--rarity-eternal-blue),
             var(--rarity-eternal-gold),
-            var(--color-card)
-        );
+            var(--color-card));
 
     background-size:
         300% 300%;
 
     box-shadow:
         var(--shadow-medium),
-        0 0 55px
-        var(--rarity-eternal-glow);
+        0 0 55px var(--rarity-eternal-glow);
 
     animation:
-        eternalBanner
-        5s
-        ease
-        infinite;
+        eternalBanner 5s ease infinite;
 }
 
 .rarity-eternal .rarity-header::before {
@@ -845,24 +768,19 @@ body {
         220%;
 
     background:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             transparent,
             var(--rarity-eternal-pink),
             var(--rarity-eternal-purple),
             var(--rarity-eternal-blue),
             var(--rarity-eternal-gold),
-            transparent
-        );
+            transparent);
 
     opacity:
         0.25;
 
     animation:
-        eternalEnergy
-        4s
-        linear
-        infinite;
+        eternalEnergy 4s linear infinite;
 }
 
 .rarity-eternal .rarity-title {
@@ -870,16 +788,11 @@ body {
         var(--rarity-eternal);
 
     text-shadow:
-        0 0 15px
-        var(--rarity-eternal-pink),
-        0 0 28px
-        var(--rarity-eternal-blue);
+        0 0 15px var(--rarity-eternal-pink),
+        0 0 28px var(--rarity-eternal-blue);
 
     animation:
-        eternalTitle
-        2.8s
-        ease-in-out
-        infinite;
+        eternalTitle 2.8s ease-in-out infinite;
 }
 
 
@@ -892,13 +805,9 @@ body {
         grid;
 
     grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(
-                190px,
-                220px
-            )
-        );
+        repeat(auto-fill,
+            minmax(190px,
+                220px));
 
     gap:
         22px;
@@ -920,8 +829,7 @@ body {
         hidden;
 
     border:
-        1px solid
-        var(--color-border);
+        1px solid var(--color-border);
 
     border-radius:
         18px;
@@ -1026,8 +934,7 @@ body {
         5px 9px;
 
     border:
-        1px solid
-        var(--color-border-light);
+        1px solid var(--color-border-light);
 
     border-radius:
         999px;
@@ -1120,8 +1027,7 @@ body {
 
 .locked-image {
     filter:
-        brightness(0)
-        opacity(0.55);
+        brightness(0) opacity(0.55);
 }
 
 .lock {
@@ -1135,10 +1041,8 @@ body {
         50%;
 
     transform:
-        translate(
-            -50%,
-            -50%
-        );
+        translate(-50%,
+            -50%);
 
     font-size:
         28px;
@@ -1189,8 +1093,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 12px
-        var(--rarity-rare-glow);
+        0 0 12px var(--rarity-rare-glow);
 }
 
 .egg-card.rare .egg-rarity {
@@ -1205,8 +1108,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 15px
-        var(--rarity-epic-glow);
+        0 0 15px var(--rarity-epic-glow);
 }
 
 .egg-card.epic .egg-rarity {
@@ -1221,8 +1123,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 18px
-        var(--rarity-legendary-glow);
+        0 0 18px var(--rarity-legendary-glow);
 }
 
 .egg-card.legendary .egg-rarity {
@@ -1237,8 +1138,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 20px
-        var(--rarity-exotic-glow);
+        0 0 20px var(--rarity-exotic-glow);
 }
 
 .egg-card.exotic .egg-rarity {
@@ -1253,8 +1153,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 23px
-        var(--rarity-mythic-glow);
+        0 0 23px var(--rarity-mythic-glow);
 }
 
 .egg-card.mythic .egg-rarity {
@@ -1269,8 +1168,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 26px
-        var(--rarity-ancient-glow);
+        0 0 26px var(--rarity-ancient-glow);
 }
 
 .egg-card.ancient .egg-rarity {
@@ -1285,8 +1183,7 @@ body {
 
     box-shadow:
         var(--shadow-medium),
-        0 0 32px
-        var(--rarity-eternal-glow);
+        0 0 32px var(--rarity-eternal-glow);
 }
 
 .egg-card.eternal .egg-rarity {
@@ -1294,8 +1191,7 @@ body {
         var(--rarity-eternal);
 
     text-shadow:
-        0 0 10px
-        var(--rarity-eternal-blue);
+        0 0 10px var(--rarity-eternal-blue);
 }
 
 
@@ -1309,15 +1205,13 @@ body {
     100% {
         box-shadow:
             var(--shadow-medium),
-            0 0 24px
-            var(--rarity-mythic-glow);
+            0 0 24px var(--rarity-mythic-glow);
     }
 
     50% {
         box-shadow:
             var(--shadow-medium),
-            0 0 45px
-            var(--rarity-mythic-glow);
+            0 0 45px var(--rarity-mythic-glow);
     }
 }
 
@@ -1328,15 +1222,13 @@ body {
     100% {
         box-shadow:
             var(--shadow-medium),
-            0 0 28px
-            var(--rarity-ancient-glow);
+            0 0 28px var(--rarity-ancient-glow);
     }
 
     50% {
         box-shadow:
             var(--shadow-medium),
-            0 0 50px
-            var(--rarity-ancient-glow);
+            0 0 50px var(--rarity-ancient-glow);
     }
 }
 
@@ -1365,46 +1257,52 @@ body {
     0%,
     100% {
         text-shadow:
-            0 0 12px
-            var(--rarity-eternal-pink),
-            0 0 24px
-            var(--rarity-eternal-blue);
+            0 0 12px var(--rarity-eternal-pink),
+            0 0 24px var(--rarity-eternal-blue);
     }
 
     50% {
         text-shadow:
-            0 0 22px
-            var(--rarity-eternal-purple),
-            0 0 38px
-            var(--rarity-eternal-gold);
+            0 0 22px var(--rarity-eternal-purple),
+            0 0 38px var(--rarity-eternal-gold);
     }
 }
 
 
 @keyframes energyMove {
 
-    from {
+    0% {
         transform:
             translateX(-45%);
     }
 
-    to {
+    50% {
         transform:
             translateX(25%);
+    }
+
+    100% {
+        transform:
+            translateX(-45%);
     }
 }
 
 
 @keyframes eternalEnergy {
 
-    from {
+    0% {
         transform:
             translateX(-50%);
     }
 
-    to {
+    50% {
         transform:
             translateX(20%);
+    }
+
+    100% {
+        transform:
+            translateX(-50%);
     }
 }
 
@@ -1417,10 +1315,8 @@ body {
 
     .page {
         width:
-            min(
-                calc(100% - 24px),
-                1400px
-            );
+            min(calc(100% - 24px),
+                1400px);
 
         padding-top:
             30px;
@@ -1459,13 +1355,9 @@ body {
 
     .egg-grid {
         grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
+            repeat(2,
+                minmax(0,
+                    1fr));
 
         gap:
             12px;
