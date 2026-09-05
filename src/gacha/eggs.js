@@ -1,5 +1,9 @@
 export const eggs = [
+
+    // ======================================================
     // Common
+    // ======================================================
+
     {
         id: "ashen",
         name: "Ashen Egg",
@@ -43,7 +47,11 @@ export const eggs = [
         image: "/assets/eggs/SUNBLEACHED.png"
     },
 
+
+    // ======================================================
     // Uncommon
+    // ======================================================
+
     {
         id: "cindercore",
         name: "Cindercore Egg",
@@ -75,7 +83,11 @@ export const eggs = [
         image: "/assets/eggs/THORNSPINE.png"
     },
 
+
+    // ======================================================
     // Rare
+    // ======================================================
+
     {
         id: "glimmerstone",
         name: "Glimmerstone Egg",
@@ -101,7 +113,11 @@ export const eggs = [
         image: "/assets/eggs/TIDALFLARE.png"
     },
 
+
+    // ======================================================
     // Epic
+    // ======================================================
+
     {
         id: "obsidian_vein",
         name: "Obsidian Vein Egg",
@@ -121,10 +137,14 @@ export const eggs = [
         image: "/assets/eggs/AURORA.png"
     },
 
+
+    // ======================================================
     // Legendary
+    // ======================================================
+
     {
-        id: "celestial",
-        name: "Celestial Egg",
+        id: "celestia",
+        name: "Celestia Egg",
         rarity: "legendary",
         image: "/assets/eggs/CELESTIAL.png"
     },
@@ -135,7 +155,11 @@ export const eggs = [
         image: "/assets/eggs/INFERNAL_CROWN.png"
     },
 
+
+    // ======================================================
     // Exotic
+    // ======================================================
+
     {
         id: "draconic_prism",
         name: "Draconic Prism Egg",
@@ -149,7 +173,11 @@ export const eggs = [
         image: "/assets/eggs/ECHO_OF_ETERNITY.png"
     },
 
+
+    // ======================================================
     // Mythic
+    // ======================================================
+
     {
         id: "heart_of_the_world",
         name: "Heart of the World Egg",
@@ -157,13 +185,17 @@ export const eggs = [
         image: "/assets/eggs/HEART_OF_THE_WORLD.png"
     },
     {
-        id: "astralworm",
-        name: "Astralworm Egg",
+        id: "astralwyrm",
+        name: "Astralwyrm Egg",
         rarity: "mythic",
         image: "/assets/eggs/ASTRALWORM.png"
     },
 
+
+    // ======================================================
     // Ancient
+    // ======================================================
+
     {
         id: "dawnscale",
         name: "Dawnscale Egg",
@@ -171,11 +203,16 @@ export const eggs = [
         image: "/assets/eggs/DAWNSCALE.png"
     },
 
+
+    // ======================================================
     // Eternal
+    // ======================================================
+
     {
         id: "eternis",
         name: "Eternis Egg",
         rarity: "eternal",
         image: "/assets/eggs/ETERNIS.png"
     }
+
 ];

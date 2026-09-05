@@ -1,1667 +1,1217 @@
-/* ==========================================================
-   Base
-   ========================================================== */
+/* =====================================================
+   GENERAL
+   ===================================================== */
 
 * {
     box-sizing: border-box;
 }
 
-html {
+html,
+body {
+    margin: 0;
     min-height: 100%;
 }
 
-body {
-    margin: 0;
+html {
+    background:
+        var(--color-background);
+}
 
+body {
     min-height: 100vh;
 
     font-family:
+        Inter,
         Arial,
+        Helvetica,
         sans-serif;
 
-    color: white;
+    color:
+        var(--color-text);
 
-    background:
-        radial-gradient(
-            circle at 50% 0%,
-            #292653 0%,
-            #151426 35%,
-            #0c0c15 70%,
-            #07070c 100%
-        );
+    background-color:
+        var(--color-background);
 
-    background-attachment: fixed;
+    background-image:
+        radial-gradient(circle at 50% 0%,
+            var(--background-glow-primary) 0%,
+            transparent 55%),
+        radial-gradient(circle at 0% 45%,
+            var(--background-glow-secondary) 0%,
+            transparent 50%),
+        radial-gradient(circle at 100% 70%,
+            var(--background-glow-accent) 0%,
+            transparent 50%),
+        linear-gradient(180deg,
+            var(--color-background-secondary) 0%,
+            var(--color-background) 60%,
+            var(--color-background) 100%);
+
+    background-repeat:
+        no-repeat;
+
+    background-size:
+        100% 100%;
+
+    background-attachment:
+        fixed;
 }
 
 
-/* ==========================================================
-   Page
-   ========================================================== */
+/* =====================================================
+   PAGE
+   ===================================================== */
 
 .page {
     width:
-        min(
-            1400px,
-            calc(100% - 40px)
-        );
+        min(1400px,
+            calc(100% - 40px));
 
     margin:
-        0
-        auto;
+        0 auto;
 
     padding:
-        50px
-        0
-        100px;
+        55px 0 100px;
 }
 
 
-/* ==========================================================
-   Page header
-   ========================================================== */
+/* =====================================================
+   HEADER
+   ===================================================== */
 
 .page-header {
-    margin-bottom: 40px;
+    margin-bottom:
+        45px;
 
-    text-align: center;
+    text-align:
+        center;
 }
 
 .page-logo {
-    margin-bottom: 10px;
+    margin-bottom:
+        8px;
 
-    font-size: 54px;
+    font-size:
+        58px;
 
     filter:
-        drop-shadow(
-            0
-            5px
-            10px
-            rgba(
-                0,
-                0,
-                0,
-                0.6
-            )
-        );
+        drop-shadow(0 0 18px var(--color-primary-glow));
 }
 
-h1 {
+.page-header h1 {
     margin:
-        0
-        0
-        10px;
+        0;
 
-    font-size: 44px;
+    color:
+        var(--color-text);
+
+    font-size:
+        clamp(32px,
+            5vw,
+            54px);
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        -1px;
+
+    text-shadow:
+        0 0 25px var(--color-primary-glow);
 }
 
 .subtitle {
-    color: #aaaac0;
+    margin-top:
+        8px;
 
-    font-size: 18px;
+    color:
+        var(--color-text-secondary);
+
+    font-size:
+        15px;
+
+    letter-spacing:
+        2px;
+
+    text-transform:
+        uppercase;
 }
 
 
-/* ==========================================================
-   Statistics
-   ========================================================== */
+/* =====================================================
+   STATS
+   ===================================================== */
 
 .stats {
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
-        repeat(
-            3,
-            1fr
-        );
+        repeat(3,
+            1fr);
 
-    gap: 15px;
+    gap:
+        18px;
 
-    max-width: 750px;
-
-    margin:
-        0
-        auto
-        30px;
+    margin-bottom:
+        24px;
 }
 
 .stat {
-    padding: 18px;
+    display:
+        flex;
 
-    text-align: center;
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    min-height:
+        110px;
+
+    padding:
+        20px;
 
     border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.1
-        );
+        1px solid var(--color-border);
 
-    border-radius: 14px;
+    border-radius:
+        18px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.05
-        );
+        var(--color-card);
 
     box-shadow:
-        0
-        10px
-        30px
-        rgba(
-            0,
-            0,
-            0,
-            0.15
-        );
+        var(--shadow-medium);
+
+    backdrop-filter:
+        blur(12px);
 }
 
 .stat-value {
-    display: block;
+    color:
+        var(--color-primary-light);
 
-    margin-bottom: 5px;
+    font-size:
+        30px;
 
-    font-size: 28px;
-    font-weight: bold;
+    font-weight:
+        800;
+
+    text-shadow:
+        0 0 16px var(--color-primary-glow);
 }
 
 .stat-label {
-    color: #aaaac0;
+    margin-top:
+        5px;
 
-    font-size: 14px;
+    color:
+        var(--color-text-secondary);
 
-    text-transform: uppercase;
+    font-size:
+        13px;
 
-    letter-spacing: 1px;
+    letter-spacing:
+        1.2px;
+
+    text-transform:
+        uppercase;
 }
 
 
-/* ==========================================================
-   Overall progress
-   ========================================================== */
+/* =====================================================
+   COLLECTION PROGRESS
+   ===================================================== */
 
 .progress-container {
-    max-width: 750px;
+    margin-bottom:
+        60px;
 
-    margin:
-        0
-        auto
-        65px;
+    padding:
+        20px 22px;
+
+    border:
+        1px solid var(--color-border);
+
+    border-radius:
+        18px;
+
+    background:
+        var(--color-card);
+
+    box-shadow:
+        var(--shadow-medium);
 }
 
 .progress-info {
-    display: flex;
+    display:
+        flex;
+
+    align-items:
+        center;
 
     justify-content:
         space-between;
 
-    margin-bottom: 8px;
+    margin-bottom:
+        12px;
 
-    color: #c7c7d9;
+    color:
+        var(--color-text-secondary);
 
-    font-size: 14px;
+    font-size:
+        14px;
 }
 
 .progress-bar {
-    height: 14px;
+    width:
+        100%;
 
-    overflow: hidden;
+    height:
+        10px;
 
-    border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
+    overflow:
+        hidden;
 
-    border-radius: 999px;
+    border-radius:
+        999px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
+        var(--color-surface-light);
 }
 
 .progress {
-    width: 0%;
-    height: 100%;
+    width:
+        0;
 
-    border-radius: 999px;
+    height:
+        100%;
+
+    border-radius:
+        inherit;
 
     background:
-        linear-gradient(
-            90deg,
-            #765cff,
-            #b75cff,
-            #f16cff
-        );
+        linear-gradient(90deg,
+            var(--color-primary-dark),
+            var(--color-primary),
+            var(--color-primary-light));
 
     box-shadow:
-        0
-        0
-        15px
-        rgba(
-            183,
-            92,
-            255,
-            0.55
-        );
+        0 0 15px var(--color-primary-glow);
 
     transition:
-        width
-        0.5s
-        ease;
+        width 0.8s ease;
 }
 
 
-/* ==========================================================
-   Rarity sections
-   ========================================================== */
+/* =====================================================
+   RARITY SECTIONS
+   ===================================================== */
 
 .rarity-sections {
-    display: flex;
+    display:
+        flex;
 
-    flex-direction: column;
+    flex-direction:
+        column;
 
-    gap: 65px;
+    gap:
+        65px;
 }
 
 .rarity-section {
-    position: relative;
+    position:
+        relative;
 }
 
 
-/* ==========================================================
-   Rarity banner base
-   ========================================================== */
+/* =====================================================
+   RARITY HEADERS
+   ===================================================== */
 
 .rarity-header {
-    position: relative;
+    position:
+        relative;
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
-    justify-content: space-between;
+    align-items:
+        center;
 
-    min-height: 68px;
+    justify-content:
+        space-between;
 
-    margin-bottom: 22px;
+    min-height:
+        68px;
+
+    margin-bottom:
+        25px;
 
     padding:
-        15px
-        22px;
+        0 24px;
 
-    overflow: hidden;
+    overflow:
+        hidden;
+
+    isolation:
+        isolate;
 
     border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.12
-        );
+        1px solid var(--color-border);
 
-    border-radius: 14px;
+    border-radius:
+        16px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.04
-        );
+        var(--color-card);
+
+    box-shadow:
+        var(--shadow-medium);
 }
-
-
-/*
- * Small highlight across every banner.
- */
 
 .rarity-header::before {
-    content: "";
+    content:
+        "";
 
-    position: absolute;
+    position:
+        absolute;
 
-    top: 0;
-    left: 0;
+    inset:
+        0;
 
-    width: 100%;
-    height: 1px;
+    z-index:
+        -2;
 
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            0.25
-        );
+    opacity:
+        0.16;
+
+    pointer-events:
+        none;
 }
-
-
-/*
- * Atmospheric light used more strongly
- * on higher rarities.
- */
 
 .rarity-header::after {
-    content: "";
+    content:
+        "";
 
-    position: absolute;
+    position:
+        absolute;
 
-    top: 50%;
-    right: -100px;
+    top:
+        0;
 
-    width: 300px;
-    height: 150px;
+    left:
+        10%;
 
-    border-radius: 50%;
+    width:
+        80%;
 
-    opacity: 0;
+    height:
+        1px;
 
-    transform:
-        translateY(-50%);
-
-    pointer-events: none;
-
-    filter:
-        blur(50px);
-}
-
-
-.rarity-title {
-    position: relative;
-
-    z-index: 2;
-
-    margin: 0;
-
-    font-size: 25px;
-    font-weight: 800;
-
-    text-transform: uppercase;
-
-    letter-spacing: 3px;
-}
-
-
-.rarity-progress {
-    position: relative;
-
-    z-index: 2;
-
-    min-width: 70px;
-
-    padding:
-        7px
-        13px;
-
-    text-align: center;
-
-    border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.1
-        );
-
-    border-radius: 999px;
+    z-index:
+        -1;
 
     background:
-        rgba(
-            0,
-            0,
-            0,
-            0.25
-        );
+        linear-gradient(90deg,
+            transparent,
+            var(--color-border-light),
+            transparent);
+}
 
-    font-size: 14px;
-    font-weight: bold;
+.rarity-title {
+    margin:
+        0;
+
+    font-size:
+        23px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        3px;
+
+    text-transform:
+        uppercase;
+}
+
+.rarity-progress {
+    padding:
+        7px 12px;
+
+    border:
+        1px solid var(--color-border);
+
+    border-radius:
+        999px;
+
+    background:
+        var(--color-dark-transparent);
+
+    color:
+        var(--color-text-secondary);
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
 }
 
 
-/* ==========================================================
+/* =====================================================
    COMMON
-   Simple grey banner
-   ========================================================== */
+   ===================================================== */
 
 .rarity-common .rarity-header {
     border-color:
-        rgba(
-            200,
-            200,
-            200,
-            0.25
-        );
+        var(--rarity-common-dark);
+}
 
+.rarity-common .rarity-header::before {
     background:
-        linear-gradient(
-            90deg,
-            rgba(
-                160,
-                160,
-                160,
-                0.12
-            ),
-            rgba(
-                255,
-                255,
-                255,
-                0.025
-            )
-        );
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-common),
+            transparent);
 }
 
 .rarity-common .rarity-title {
-    color: #dddddd;
+    color:
+        var(--rarity-common);
 }
 
 
-/* ==========================================================
+/* =====================================================
    UNCOMMON
-   Slight green glow
-   ========================================================== */
+   ===================================================== */
 
 .rarity-uncommon .rarity-header {
     border-color:
-        rgba(
-            70,
-            220,
-            100,
-            0.35
-        );
+        var(--rarity-uncommon-dark);
 
+    box-shadow:
+        var(--shadow-medium),
+        0 0 18px var(--rarity-uncommon-glow);
+}
+
+.rarity-uncommon .rarity-header::before {
     background:
-        linear-gradient(
-            90deg,
-            rgba(
-                70,
-                220,
-                100,
-                0.16
-            ),
-            rgba(
-                70,
-                220,
-                100,
-                0.03
-            )
-        );
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-uncommon),
+            transparent);
 }
 
 .rarity-uncommon .rarity-title {
-    color: #62ff7d;
-}
-
-.rarity-uncommon .rarity-header::after {
-    opacity: 0.15;
-
-    background: #62ff7d;
+    color:
+        var(--rarity-uncommon);
 }
 
 
-/* ==========================================================
+/* =====================================================
    RARE
-   Blue glow
-   ========================================================== */
+   ===================================================== */
 
 .rarity-rare .rarity-header {
     border-color:
-        rgba(
-            70,
-            130,
-            255,
-            0.45
-        );
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(
-                70,
-                130,
-                255,
-                0.22
-            ),
-            rgba(
-                70,
-                130,
-                255,
-                0.04
-            )
-        );
+        var(--rarity-rare-dark);
 
     box-shadow:
-        0
-        5px
-        20px
-        rgba(
-            70,
-            130,
-            255,
-            0.08
-        );
+        var(--shadow-medium),
+        0 0 22px var(--rarity-rare-glow);
+}
+
+.rarity-rare .rarity-header::before {
+    background:
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-rare),
+            transparent);
 }
 
 .rarity-rare .rarity-title {
-    color: #629cff;
-
-    text-shadow:
-        0
-        0
-        10px
-        rgba(
-            98,
-            156,
-            255,
-            0.3
-        );
-}
-
-.rarity-rare .rarity-header::after {
-    opacity: 0.25;
-
-    background: #629cff;
+    color:
+        var(--rarity-rare);
 }
 
 
-/* ==========================================================
+/* =====================================================
    EPIC
-   Purple illuminated banner
-   ========================================================== */
+   ===================================================== */
 
 .rarity-epic .rarity-header {
     border-color:
-        rgba(
-            180,
-            70,
-            255,
-            0.55
-        );
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(
-                180,
-                70,
-                255,
-                0.27
-            ),
-            rgba(
-                110,
-                50,
-                170,
-                0.08
-            ),
-            rgba(
-                180,
-                70,
-                255,
-                0.03
-            )
-        );
+        var(--rarity-epic);
 
     box-shadow:
-        0
-        6px
-        25px
-        rgba(
-            180,
-            70,
-            255,
-            0.12
-        );
+        var(--shadow-medium),
+        0 0 25px var(--rarity-epic-glow);
+}
+
+.rarity-epic .rarity-header::before {
+    background:
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-epic),
+            transparent);
+
+    opacity:
+        0.22;
 }
 
 .rarity-epic .rarity-title {
-    color: #c76dff;
-
-    text-shadow:
-        0
-        0
-        12px
-        rgba(
-            199,
-            109,
-            255,
-            0.45
-        );
-}
-
-.rarity-epic .rarity-header::after {
-    opacity: 0.35;
-
-    background: #c76dff;
+    color:
+        var(--rarity-epic);
 }
 
 
-/* ==========================================================
+/* =====================================================
    LEGENDARY
-   Gold starts becoming substantially more dramatic
-   ========================================================== */
+   ===================================================== */
 
 .rarity-legendary .rarity-header {
     border-color:
-        rgba(
-            255,
-            175,
-            30,
-            0.7
-        );
-
-    background:
-        linear-gradient(
-            110deg,
-            rgba(
-                255,
-                175,
-                30,
-                0.32
-            ),
-            rgba(
-                130,
-                70,
-                10,
-                0.13
-            ),
-            rgba(
-                255,
-                175,
-                30,
-                0.04
-            )
-        );
+        var(--rarity-legendary);
 
     box-shadow:
-        0
-        8px
-        30px
-        rgba(
-            255,
-            175,
-            30,
-            0.17
-        ),
-        inset
-        0
-        0
-        25px
-        rgba(
-            255,
-            175,
-            30,
-            0.06
-        );
+        var(--shadow-medium),
+        0 0 28px var(--rarity-legendary-glow);
+}
+
+.rarity-legendary .rarity-header::before {
+    background:
+        radial-gradient(circle,
+            var(--rarity-legendary),
+            transparent 65%);
+
+    opacity:
+        0.24;
 }
 
 .rarity-legendary .rarity-title {
-    color: #ffbd42;
+    color:
+        var(--rarity-legendary);
 
     text-shadow:
-        0
-        0
-        10px
-        rgba(
-            255,
-            181,
-            46,
-            0.7
-        );
-}
-
-.rarity-legendary .rarity-header::after {
-    opacity: 0.5;
-
-    background: #ffb52e;
+        0 0 15px var(--rarity-legendary-glow);
 }
 
 
-/* ==========================================================
+/* =====================================================
    EXOTIC
-   Pink / magenta energy
-   ========================================================== */
+   ===================================================== */
 
 .rarity-exotic .rarity-header {
     border-color:
-        rgba(
-            255,
-            60,
-            150,
-            0.75
-        );
-
-    background:
-        linear-gradient(
-            110deg,
-            rgba(
-                255,
-                60,
-                150,
-                0.34
-            ),
-            rgba(
-                130,
-                20,
-                90,
-                0.14
-            ),
-            rgba(
-                255,
-                60,
-                150,
-                0.04
-            )
-        );
+        var(--rarity-exotic);
 
     box-shadow:
-        0
-        8px
-        32px
-        rgba(
-            255,
-            60,
-            150,
-            0.18
-        ),
-        inset
-        0
-        0
-        25px
-        rgba(
-            255,
-            60,
-            150,
-            0.07
-        );
+        var(--shadow-medium),
+        0 0 32px var(--rarity-exotic-glow);
+}
+
+.rarity-exotic .rarity-header::before {
+    background:
+        linear-gradient(100deg,
+            transparent,
+            var(--rarity-exotic),
+            transparent);
+
+    opacity:
+        0.26;
 }
 
 .rarity-exotic .rarity-title {
-    color: #ff6ab3;
+    color:
+        var(--rarity-exotic);
 
     text-shadow:
-        0
-        0
-        12px
-        rgba(
-            255,
-            60,
-            150,
-            0.75
-        );
-}
-
-.rarity-exotic .rarity-header::after {
-    opacity: 0.55;
-
-    background: #ff3c96;
+        0 0 18px var(--rarity-exotic-glow);
 }
 
 
-/* ==========================================================
+/* =====================================================
    MYTHIC
-   Animated magical purple energy
-   ========================================================== */
+   ===================================================== */
 
 .rarity-mythic .rarity-header {
     border-color:
-        rgba(
-            230,
-            40,
-            255,
-            0.85
-        );
+        var(--rarity-mythic);
 
     background:
-        linear-gradient(
-            110deg,
-            rgba(
-                230,
-                40,
-                255,
-                0.38
-            ),
-            rgba(
-                110,
-                30,
-                180,
-                0.18
-            ),
-            rgba(
-                80,
-                30,
-                130,
-                0.08
-            )
-        );
+        linear-gradient(110deg,
+            var(--color-card),
+            var(--rarity-mythic-background),
+            var(--color-card));
 
     box-shadow:
-        0
-        0
-        30px
-        rgba(
-            230,
-            40,
-            255,
-            0.22
-        ),
-        inset
-        0
-        0
-        30px
-        rgba(
-            230,
-            40,
-            255,
-            0.09
-        );
+        var(--shadow-medium),
+        0 0 38px var(--rarity-mythic-glow);
 
     animation:
-        mythicBanner
-        3s
-        ease-in-out
-        infinite;
+        mythicBanner 3s ease-in-out infinite;
+}
+
+.rarity-mythic .rarity-header::before {
+    width:
+        200%;
+
+    background:
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-mythic),
+            var(--rarity-mythic-secondary),
+            transparent);
+
+    opacity:
+        0.22;
+
+    animation:
+        energyMove 5s linear infinite;
 }
 
 .rarity-mythic .rarity-title {
-    color: #f16cff;
+    color:
+        var(--rarity-mythic);
 
     text-shadow:
-        0
-        0
-        8px
-        #e628ff,
-        0
-        0
-        18px
-        rgba(
-            230,
-            40,
-            255,
-            0.65
-        );
-}
-
-.rarity-mythic .rarity-header::after {
-    opacity: 0.7;
-
-    background: #e628ff;
-
-    animation:
-        energyMove
-        4s
-        ease-in-out
-        infinite;
+        0 0 20px var(--rarity-mythic-glow);
 }
 
 
-/* ==========================================================
+/* =====================================================
    ANCIENT
-   Bright golden relic-style banner
-   ========================================================== */
+   ===================================================== */
 
 .rarity-ancient .rarity-header {
-    min-height: 74px;
-
-    border:
-        1px
-        solid
-        rgba(
-            255,
-            220,
-            80,
-            0.95
-        );
+    border-color:
+        var(--rarity-ancient);
 
     background:
-        linear-gradient(
-            110deg,
-            rgba(
-                255,
-                215,
-                60,
-                0.4
-            ),
-            rgba(
-                150,
-                100,
-                10,
-                0.18
-            ),
-            rgba(
-                255,
-                220,
-                80,
-                0.07
-            )
-        );
+        linear-gradient(110deg,
+            var(--color-card),
+            var(--rarity-ancient-background),
+            var(--color-card));
 
     box-shadow:
-        0
-        0
-        30px
-        rgba(
-            255,
-            220,
-            80,
-            0.28
-        ),
-        inset
-        0
-        0
-        35px
-        rgba(
-            255,
-            220,
-            80,
-            0.11
-        );
+        var(--shadow-medium),
+        0 0 42px var(--rarity-ancient-glow);
 
     animation:
-        ancientBanner
-        2.5s
-        ease-in-out
-        infinite;
+        ancientBanner 2.8s ease-in-out infinite;
+}
+
+.rarity-ancient .rarity-header::before {
+    width:
+        200%;
+
+    background:
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-ancient-secondary),
+            var(--rarity-ancient),
+            transparent);
+
+    opacity:
+        0.24;
+
+    animation:
+        energyMove 4s linear infinite;
 }
 
 .rarity-ancient .rarity-title {
-    font-size: 27px;
-
-    color: #ffe86b;
+    color:
+        var(--rarity-ancient);
 
     text-shadow:
-        0
-        0
-        8px
-        #ffc933,
-        0
-        0
-        20px
-        rgba(
-            255,
-            220,
-            80,
-            0.8
-        );
-}
-
-.rarity-ancient .rarity-header::after {
-    opacity: 0.85;
-
-    background: #ffe86b;
-
-    animation:
-        energyMove
-        3s
-        ease-in-out
-        infinite;
+        0 0 22px var(--rarity-ancient-glow);
 }
 
 
-/* ==========================================================
+/* =====================================================
    ETERNAL
-   Highest rarity
-
-   Intentionally much more dramatic.
-   ========================================================== */
+   ===================================================== */
 
 .rarity-eternal .rarity-header {
-    min-height: 82px;
-
-    border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.95
-        );
+    border-color:
+        var(--rarity-eternal);
 
     background:
-        linear-gradient(
-            110deg,
-            rgba(
-                125,
-                100,
-                255,
-                0.38
-            ),
-            rgba(
-                255,
-                90,
-                210,
-                0.25
-            ),
-            rgba(
-                100,
-                160,
-                255,
-                0.23
-            ),
-            rgba(
-                255,
-                255,
-                255,
-                0.12
-            )
-        );
+        linear-gradient(120deg,
+            var(--color-card),
+            var(--rarity-eternal-pink),
+            var(--rarity-eternal-purple),
+            var(--rarity-eternal-blue),
+            var(--rarity-eternal-gold),
+            var(--color-card));
 
     background-size:
-        300%
-        300%;
+        300% 300%;
 
     box-shadow:
-        0
-        0
-        25px
-        rgba(
-            180,
-            120,
-            255,
-            0.4
-        ),
-        0
-        0
-        50px
-        rgba(
-            100,
-            140,
-            255,
-            0.2
-        ),
-        inset
-        0
-        0
-        35px
-        rgba(
-            255,
-            255,
-            255,
-            0.13
-        );
+        var(--shadow-medium),
+        0 0 55px var(--rarity-eternal-glow);
 
     animation:
-        eternalBanner
-        5s
-        ease
-        infinite;
+        eternalBanner 5s ease infinite;
+}
+
+.rarity-eternal .rarity-header::before {
+    width:
+        220%;
+
+    background:
+        linear-gradient(90deg,
+            transparent,
+            var(--rarity-eternal-pink),
+            var(--rarity-eternal-purple),
+            var(--rarity-eternal-blue),
+            var(--rarity-eternal-gold),
+            transparent);
+
+    opacity:
+        0.25;
+
+    animation:
+        eternalEnergy 4s linear infinite;
 }
 
 .rarity-eternal .rarity-title {
-    font-size: 30px;
-
-    color: white;
-
-    letter-spacing: 5px;
+    color:
+        var(--rarity-eternal);
 
     text-shadow:
-        0
-        0
-        7px
-        white,
-        0
-        0
-        15px
-        #b684ff,
-        0
-        0
-        30px
-        #668cff;
+        0 0 15px var(--rarity-eternal-pink),
+        0 0 28px var(--rarity-eternal-blue);
 
     animation:
-        eternalTitle
-        1.8s
-        ease-in-out
-        infinite
-        alternate;
-}
-
-.rarity-eternal .rarity-progress {
-    border-color:
-        rgba(
-            255,
-            255,
-            255,
-            0.45
-        );
-
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            0.1
-        );
-
-    box-shadow:
-        0
-        0
-        15px
-        rgba(
-            190,
-            130,
-            255,
-            0.35
-        );
-}
-
-.rarity-eternal .rarity-header::after {
-    width: 450px;
-    height: 200px;
-
-    opacity: 0.9;
-
-    background:
-        linear-gradient(
-            90deg,
-            #b684ff,
-            #ff73da,
-            #668cff
-        );
-
-    animation:
-        eternalEnergy
-        3s
-        ease-in-out
-        infinite;
+        eternalTitle 2.8s ease-in-out infinite;
 }
 
 
-/* ==========================================================
-   Egg grid
-   ========================================================== */
+/* =====================================================
+   EGG GRID
+   ===================================================== */
 
 .egg-grid {
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(
-                190px,
-                220px
-            )
-        );
+        repeat(auto-fill,
+            minmax(190px,
+                220px));
 
-    gap: 20px;
+    gap:
+        22px;
 }
 
 
-/* ==========================================================
-   Egg cards
-   ========================================================== */
+/* =====================================================
+   EGG CARD
+   ===================================================== */
 
 .egg-card {
-    position: relative;
+    position:
+        relative;
 
-    overflow: hidden;
+    min-width:
+        0;
 
-    padding:
-        18px
-        15px
-        20px;
-
-    text-align: center;
+    overflow:
+        hidden;
 
     border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.1
-        );
+        1px solid var(--color-border);
 
-    border-radius: 18px;
+    border-radius:
+        18px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.04
-        );
-
-    transition:
-        transform
-        0.2s
-        ease,
-        box-shadow
-        0.2s
-        ease,
-        border-color
-        0.2s
-        ease;
-}
-
-.unlocked:hover {
-    transform:
-        translateY(-6px)
-        scale(1.02);
+        var(--color-card);
 
     box-shadow:
-        0
-        14px
-        30px
-        rgba(
-            0,
-            0,
-            0,
-            0.4
-        );
+        var(--shadow-medium);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.egg-card:hover {
+    transform:
+        translateY(-5px);
+
+    background:
+        var(--color-card-hover);
+
+    box-shadow:
+        var(--shadow-large);
 }
 
 
-/* ==========================================================
-   Egg image
-   ========================================================== */
+/* =====================================================
+   IMAGE
+   ===================================================== */
 
 .egg-image-container {
-    position: relative;
+    position:
+        relative;
 
-    height: 180px;
+    display:
+        flex;
 
-    display: flex;
+    align-items:
+        center;
 
-    align-items: center;
-    justify-content: center;
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    aspect-ratio:
+        1 / 1;
+
+    padding:
+        18px;
+
+    overflow:
+        hidden;
 }
 
 .egg-image {
-    width: 160px;
-    height: 160px;
+    display:
+        block;
 
-    object-fit: contain;
+    max-width:
+        100%;
 
-    filter:
-        drop-shadow(
-            0
-            8px
-            12px
-            rgba(
-                0,
-                0,
-                0,
-                0.5
-            )
-        );
+    max-height:
+        100%;
+
+    object-fit:
+        contain;
 
     transition:
-        transform
-        0.2s
-        ease;
+        transform 0.25s ease,
+        filter 0.25s ease;
 }
 
-.unlocked:hover .egg-image {
+.egg-card:hover .egg-image {
     transform:
-        scale(1.05);
+        scale(1.06);
 }
 
 
-/* ==========================================================
-   Quantity
-   ========================================================== */
+/* =====================================================
+   QUANTITY
+   ===================================================== */
 
 .quantity {
-    position: absolute;
+    position:
+        absolute;
 
-    right: 5px;
-    bottom: 5px;
+    right:
+        10px;
+
+    bottom:
+        10px;
+
+    min-width:
+        35px;
 
     padding:
-        5px
-        9px;
+        5px 9px;
 
     border:
-        1px
-        solid
-        rgba(
-            255,
-            255,
-            255,
-            0.12
-        );
+        1px solid var(--color-border-light);
 
-    border-radius: 999px;
+    border-radius:
+        999px;
 
     background:
-        rgba(
-            0,
-            0,
-            0,
-            0.72
-        );
+        var(--color-dark-transparent-strong);
 
-    font-weight: bold;
+    color:
+        var(--color-text);
+
+    font-size:
+        13px;
+
+    font-weight:
+        800;
+
+    text-align:
+        center;
+
+    box-shadow:
+        var(--shadow-small);
 }
 
 
-/* ==========================================================
-   Egg text
-   ========================================================== */
+/* =====================================================
+   EGG TEXT
+   ===================================================== */
 
 .egg-name {
-    margin-top: 10px;
+    padding:
+        0 15px;
 
-    font-size: 18px;
-    font-weight: bold;
+    overflow:
+        hidden;
+
+    color:
+        var(--color-text);
+
+    font-size:
+        15px;
+
+    font-weight:
+        700;
+
+    text-align:
+        center;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
 }
 
 .egg-rarity {
-    margin-top: 6px;
+    padding:
+        7px 15px 16px;
 
-    font-size: 13px;
-    font-weight: bold;
+    color:
+        var(--color-text-secondary);
 
-    text-transform: uppercase;
+    font-size:
+        11px;
 
-    letter-spacing: 1px;
+    font-weight:
+        800;
+
+    letter-spacing:
+        1.3px;
+
+    text-align:
+        center;
+
+    text-transform:
+        uppercase;
 }
 
 
-/* ==========================================================
-   Locked eggs
-   ========================================================== */
+/* =====================================================
+   LOCKED
+   ===================================================== */
 
-.locked {
-    opacity: 0.5;
+.egg-card.locked {
+    border-color:
+        var(--color-locked);
+
+    background:
+        var(--color-locked-background);
 }
 
 .locked-image {
     filter:
-        brightness(0)
-        opacity(0.55);
+        brightness(0) opacity(0.55);
 }
 
 .lock {
-    position: absolute;
+    position:
+        absolute;
 
-    font-size: 34px;
+    top:
+        50%;
+
+    left:
+        50%;
+
+    transform:
+        translate(-50%,
+            -50%);
+
+    font-size:
+        28px;
+
+    opacity:
+        0.75;
 
     filter:
-        drop-shadow(
-            0
-            3px
-            5px
-            black
-        );
+        grayscale(1);
 }
 
-.locked .egg-rarity {
-    color: #888;
+.egg-card.locked .egg-name,
+.egg-card.locked .egg-rarity {
+    color:
+        var(--color-locked-text);
 }
 
 
-/* ==========================================================
-   Unlocked card rarity styling
-   ========================================================== */
+/* =====================================================
+   RARITY CARDS
+   ===================================================== */
 
-.common {
+.egg-card.common {
     border-color:
-        rgba(
-            200,
-            200,
-            200,
-            0.35
-        );
+        var(--rarity-common);
 }
 
-.common .egg-rarity {
-    color: #dddddd;
+.egg-card.common .egg-rarity {
+    color:
+        var(--rarity-common);
 }
 
 
-.uncommon {
+.egg-card.uncommon {
     border-color:
-        rgba(
-            70,
-            220,
-            100,
-            0.45
-        );
+        var(--rarity-uncommon);
 }
 
-.uncommon .egg-rarity {
-    color: #62ff7d;
+.egg-card.uncommon .egg-rarity {
+    color:
+        var(--rarity-uncommon);
 }
 
 
-.rare {
+.egg-card.rare {
     border-color:
-        rgba(
-            70,
-            130,
-            255,
-            0.55
-        );
-}
-
-.rare .egg-rarity {
-    color: #629cff;
-}
-
-
-.epic {
-    border-color:
-        rgba(
-            180,
-            70,
-            255,
-            0.6
-        );
-}
-
-.epic .egg-rarity {
-    color: #c76dff;
-}
-
-
-.legendary {
-    border-color:
-        rgba(
-            255,
-            175,
-            30,
-            0.7
-        );
+        var(--rarity-rare);
 
     box-shadow:
-        inset
-        0
-        0
-        25px
-        rgba(
-            255,
-            175,
-            30,
-            0.06
-        );
+        var(--shadow-medium),
+        0 0 12px var(--rarity-rare-glow);
 }
 
-.legendary .egg-rarity {
-    color: #ffb52e;
+.egg-card.rare .egg-rarity {
+    color:
+        var(--rarity-rare);
 }
 
 
-.exotic {
+.egg-card.epic {
     border-color:
-        rgba(
-            255,
-            60,
-            150,
-            0.7
-        );
-}
-
-.exotic .egg-rarity {
-    color: #ff59b0;
-}
-
-
-.mythic {
-    border-color:
-        rgba(
-            230,
-            40,
-            255,
-            0.75
-        );
+        var(--rarity-epic);
 
     box-shadow:
-        inset
-        0
-        0
-        30px
-        rgba(
-            230,
-            40,
-            255,
-            0.08
-        );
+        var(--shadow-medium),
+        0 0 15px var(--rarity-epic-glow);
 }
 
-.mythic .egg-rarity {
-    color: #f16cff;
+.egg-card.epic .egg-rarity {
+    color:
+        var(--rarity-epic);
 }
 
 
-.ancient {
+.egg-card.legendary {
     border-color:
-        rgba(
-            255,
-            220,
-            80,
-            0.8
-        );
+        var(--rarity-legendary);
 
     box-shadow:
-        inset
-        0
-        0
-        30px
-        rgba(
-            255,
-            220,
-            80,
-            0.1
-        );
+        var(--shadow-medium),
+        0 0 18px var(--rarity-legendary-glow);
 }
 
-.ancient .egg-rarity {
-    color: #ffe86b;
+.egg-card.legendary .egg-rarity {
+    color:
+        var(--rarity-legendary);
 }
 
 
-.eternal {
+.egg-card.exotic {
     border-color:
-        rgba(
-            255,
-            255,
-            255,
-            0.9
-        );
+        var(--rarity-exotic);
 
     box-shadow:
-        0
-        0
-        25px
-        rgba(
-            190,
-            120,
-            255,
-            0.2
-        ),
-        inset
-        0
-        0
-        25px
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
+        var(--shadow-medium),
+        0 0 20px var(--rarity-exotic-glow);
 }
 
-.eternal .egg-rarity {
-    color: white;
+.egg-card.exotic .egg-rarity {
+    color:
+        var(--rarity-exotic);
+}
+
+
+.egg-card.mythic {
+    border-color:
+        var(--rarity-mythic);
+
+    box-shadow:
+        var(--shadow-medium),
+        0 0 23px var(--rarity-mythic-glow);
+}
+
+.egg-card.mythic .egg-rarity {
+    color:
+        var(--rarity-mythic);
+}
+
+
+.egg-card.ancient {
+    border-color:
+        var(--rarity-ancient);
+
+    box-shadow:
+        var(--shadow-medium),
+        0 0 26px var(--rarity-ancient-glow);
+}
+
+.egg-card.ancient .egg-rarity {
+    color:
+        var(--rarity-ancient);
+}
+
+
+.egg-card.eternal {
+    border-color:
+        var(--rarity-eternal);
+
+    box-shadow:
+        var(--shadow-medium),
+        0 0 32px var(--rarity-eternal-glow);
+}
+
+.egg-card.eternal .egg-rarity {
+    color:
+        var(--rarity-eternal);
 
     text-shadow:
-        0
-        0
-        10px
-        #b684ff;
+        0 0 10px var(--rarity-eternal-blue);
 }
 
 
-/* ==========================================================
-   Banner animations
-   ========================================================== */
+/* =====================================================
+   ANIMATIONS
+   ===================================================== */
 
 @keyframes mythicBanner {
 
     0%,
     100% {
         box-shadow:
-            0
-            0
-            25px
-            rgba(
-                230,
-                40,
-                255,
-                0.18
-            ),
-            inset
-            0
-            0
-            30px
-            rgba(
-                230,
-                40,
-                255,
-                0.08
-            );
+            var(--shadow-medium),
+            0 0 24px var(--rarity-mythic-glow);
     }
 
     50% {
         box-shadow:
-            0
-            0
-            38px
-            rgba(
-                230,
-                40,
-                255,
-                0.35
-            ),
-            inset
-            0
-            0
-            35px
-            rgba(
-                230,
-                40,
-                255,
-                0.13
-            );
+            var(--shadow-medium),
+            0 0 45px var(--rarity-mythic-glow);
     }
 }
 
@@ -1671,71 +1221,14 @@ h1 {
     0%,
     100% {
         box-shadow:
-            0
-            0
-            25px
-            rgba(
-                255,
-                220,
-                80,
-                0.22
-            ),
-            inset
-            0
-            0
-            30px
-            rgba(
-                255,
-                220,
-                80,
-                0.08
-            );
+            var(--shadow-medium),
+            0 0 28px var(--rarity-ancient-glow);
     }
 
     50% {
         box-shadow:
-            0
-            0
-            45px
-            rgba(
-                255,
-                220,
-                80,
-                0.42
-            ),
-            inset
-            0
-            0
-            40px
-            rgba(
-                255,
-                220,
-                80,
-                0.15
-            );
-    }
-}
-
-
-@keyframes energyMove {
-
-    0%,
-    100% {
-        transform:
-            translate(
-                0,
-                -50%
-            )
-            scale(1);
-    }
-
-    50% {
-        transform:
-            translate(
-                -180px,
-                -50%
-            )
-            scale(1.3);
+            var(--shadow-medium),
+            0 0 50px var(--rarity-ancient-glow);
     }
 }
 
@@ -1744,179 +1237,139 @@ h1 {
 
     0% {
         background-position:
-            0%
-            50%;
+            0% 50%;
     }
 
     50% {
         background-position:
-            100%
-            50%;
+            100% 50%;
     }
 
     100% {
         background-position:
-            0%
-            50%;
+            0% 50%;
     }
 }
 
 
 @keyframes eternalTitle {
 
-    from {
+    0%,
+    100% {
         text-shadow:
-            0
-            0
-            7px
-            white,
-            0
-            0
-            15px
-            #b684ff,
-            0
-            0
-            25px
-            #668cff;
+            0 0 12px var(--rarity-eternal-pink),
+            0 0 24px var(--rarity-eternal-blue);
     }
 
-    to {
+    50% {
         text-shadow:
-            0
-            0
-            12px
-            white,
-            0
-            0
-            25px
-            #ff73da,
-            0
-            0
-            45px
-            #668cff;
+            0 0 22px var(--rarity-eternal-purple),
+            0 0 38px var(--rarity-eternal-gold);
+    }
+}
+
+
+@keyframes energyMove {
+
+    0% {
+        transform:
+            translateX(-45%);
+    }
+
+    50% {
+        transform:
+            translateX(25%);
+    }
+
+    100% {
+        transform:
+            translateX(-45%);
     }
 }
 
 
 @keyframes eternalEnergy {
 
-    0%,
-    100% {
+    0% {
         transform:
-            translate(
-                0,
-                -50%
-            )
-            scale(1);
+            translateX(-50%);
     }
 
     50% {
         transform:
-            translate(
-                -250px,
-                -50%
-            )
-            scale(1.4);
+            translateX(20%);
+    }
+
+    100% {
+        transform:
+            translateX(-50%);
     }
 }
 
 
-/* ==========================================================
-   Mobile
-   ========================================================== */
+/* =====================================================
+   MOBILE
+   ===================================================== */
 
-@media (
-    max-width: 700px
-) {
+@media (max-width: 700px) {
 
     .page {
         width:
-            calc(
-                100% - 24px
-            );
+            min(calc(100% - 24px),
+                1400px);
 
-        padding-top: 30px;
+        padding-top:
+            30px;
     }
-
 
     .stats {
         grid-template-columns:
             1fr;
     }
 
-
-    h1 {
-        font-size: 32px;
-    }
-
-
-    .page-logo {
-        font-size: 44px;
-    }
-
-
     .rarity-sections {
-        gap: 45px;
+        gap:
+            45px;
     }
-
 
     .rarity-header {
-        min-height: 60px;
+        min-height:
+            58px;
 
         padding:
-            12px
-            15px;
+            0 16px;
     }
-
 
     .rarity-title {
-        font-size: 20px;
+        font-size:
+            17px;
 
-        letter-spacing: 2px;
+        letter-spacing:
+            2px;
     }
 
-
-    .rarity-eternal .rarity-title {
-        font-size: 21px;
-
-        letter-spacing: 3px;
+    .rarity-progress {
+        font-size:
+            12px;
     }
-
 
     .egg-grid {
         grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
+            repeat(2,
+                minmax(0,
+                    1fr));
 
-        gap: 12px;
+        gap:
+            12px;
     }
-
-
-    .egg-image-container {
-        height: 140px;
-    }
-
-
-    .egg-image {
-        width: 125px;
-        height: 125px;
-    }
-
-
-    .egg-card {
-        padding:
-            12px
-            8px
-            16px;
-    }
-
 
     .egg-name {
-        font-size: 15px;
+        font-size:
+            13px;
+    }
+
+    .egg-rarity {
+        font-size:
+            10px;
     }
 }

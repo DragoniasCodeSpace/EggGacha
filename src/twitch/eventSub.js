@@ -1,181 +1,1084 @@
-import WebSocket from "ws";
+import { WebSocket } from "ws";
+
 import { config } from "../config/config.js";
+import { subscribeToChat } from "./chat.js";
+import { twitchFetch } from "./session.js";
 
-const EVENTSUB_URL = "wss://eventsub.wss.twitch.tv/ws";
 
-export function connectToEventSub(twitchSession, onRedemption) {
-    console.log("Connecting to Twitch EventSub...");
+const EVENTSUB_URL =
+    "wss://eventsub.wss.twitch.tv/ws";
 
-    const socket = new WebSocket(EVENTSUB_URL);
+const MAX_RECONNECT_DELAY =
+    30_000;
 
-    socket.on("open", () => {
-        console.log("Connected to Twitch EventSub ✓");
-    });
+const KEEPALIVE_GRACE_MS =
+    5_000;
 
-    socket.on("message", async (rawData) => {
-        try {
-            const message = JSON.parse(rawData.toString());
 
-            const messageType = message.metadata.message_type;
+// ======================================================
+// Connect to Twitch EventSub
+// ======================================================
 
-            switch (messageType) {
-                case "session_welcome": {
-                    const sessionId = message.payload.session.id;
+export function connectToEventSub(
+    twitchSession,
+    onRedemption,
+    onChatMessage
+) {
 
-                    console.log("EventSub session:", sessionId);
+    const connection =
+        createConnectionManager(
+            twitchSession,
+            onRedemption,
+            onChatMessage
+        );
 
-                    await subscribeToRedemptions(
-                        twitchSession,
-                        sessionId
-                    );
 
-                    break;
-                }
+    connection.connect(
+        EVENTSUB_URL,
+        false
+    );
 
-                case "notification": {
-                    const event = message.payload.event;
 
-                    if (onRedemption) {
-                        await onRedemption(event);
+    return connection;
+
+}
+
+
+// ======================================================
+// Connection manager
+// ======================================================
+
+function createConnectionManager(
+    twitchSession,
+    onRedemption,
+    onChatMessage
+) {
+
+    let socket =
+        null;
+
+    // A normal connection that has not received
+    // session_welcome yet.
+    let pendingSocket =
+        null;
+
+    // A Twitch-requested replacement connection.
+    let replacementSocket =
+        null;
+
+    let reconnecting =
+        false;
+
+    let manuallyClosed =
+        false;
+
+    let reconnectTimer =
+        null;
+
+    let reconnectAttempt =
+        0;
+
+    let keepaliveTimer =
+        null;
+
+    let keepaliveTimeoutMs =
+        null;
+
+
+    // ==================================================
+    // Connect
+    // ==================================================
+
+    function connect(
+        url,
+        isReconnect
+    ) {
+
+        if (manuallyClosed) {
+            return;
+        }
+
+
+        console.log(
+            isReconnect
+                ? "Connecting to Twitch EventSub reconnect URL..."
+                : "Connecting to Twitch EventSub..."
+        );
+
+
+        const newSocket =
+            new WebSocket(
+                url
+            );
+
+
+        if (isReconnect) {
+
+            replacementSocket =
+                newSocket;
+
+        } else {
+
+            pendingSocket =
+                newSocket;
+
+        }
+
+
+        // ==================================================
+        // Open
+        // ==================================================
+
+        newSocket.on(
+            "open",
+            () => {
+
+                console.log(
+                    isReconnect
+                        ? "Connected to Twitch EventSub replacement WebSocket ✓"
+                        : "Connected to Twitch EventSub WebSocket ✓"
+                );
+
+            }
+        );
+
+
+        // ==================================================
+        // Message
+        // ==================================================
+
+        newSocket.on(
+            "message",
+            async rawMessage => {
+
+                try {
+
+                    const message =
+                        JSON.parse(
+                            rawMessage.toString()
+                        );
+
+
+                    // Any message from the active socket
+                    // proves the connection is alive.
+
+                    if (
+                        newSocket === socket
+                    ) {
+
+                        resetKeepaliveWatchdog();
+
                     }
 
-                    break;
-                }
 
-                case "session_keepalive": {
-                    // Twitch sends this to keep the connection alive.
-                    // Nothing needs to happen here.
-                    break;
-                }
+                    const messageType =
+                        message.metadata
+                            ?.message_type;
 
-                case "session_reconnect": {
-                    const reconnectUrl =
-                        message.payload.session.reconnect_url;
 
-                    console.log(
-                        "Twitch requested EventSub reconnect."
-                    );
+                    // ==================================
+                    // Session welcome
+                    // ==================================
 
-                    console.log(
-                        "Reconnect URL:",
-                        reconnectUrl
-                    );
+                    if (
+                        messageType ===
+                        "session_welcome"
+                    ) {
 
-                    // We'll properly handle reconnecting later.
-                    break;
-                }
+                        const sessionId =
+                            message.payload
+                                ?.session
+                                ?.id;
 
-                case "revocation": {
+
+                        const keepaliveTimeoutSeconds =
+                            message.payload
+                                ?.session
+                                ?.keepalive_timeout_seconds;
+
+
+                        if (!sessionId) {
+
+                            throw new Error(
+                                "Twitch EventSub did not provide a session ID."
+                            );
+
+                        }
+
+
+                        if (
+                            Number.isFinite(
+                                keepaliveTimeoutSeconds
+                            ) &&
+                            keepaliveTimeoutSeconds > 0
+                        ) {
+
+                            keepaliveTimeoutMs =
+                                keepaliveTimeoutSeconds *
+                                1000;
+
+
+                            console.log(
+                                `Twitch EventSub keepalive timeout: ${keepaliveTimeoutSeconds}s`
+                            );
+
+                        }
+
+
+                        // ==============================
+                        // Twitch-requested reconnect
+                        // ==============================
+
+                        if (isReconnect) {
+
+                            console.log(
+                                "Twitch EventSub reconnect completed ✓"
+                            );
+
+
+                            const oldSocket =
+                                socket;
+
+
+                            socket =
+                                newSocket;
+
+
+                            replacementSocket =
+                                null;
+
+
+                            reconnecting =
+                                false;
+
+
+                            reconnectAttempt =
+                                0;
+
+
+                            clearReconnectTimer();
+
+
+                            resetKeepaliveWatchdog();
+
+
+                            if (
+                                oldSocket &&
+                                oldSocket !== newSocket
+                            ) {
+
+                                try {
+
+                                    oldSocket.close();
+
+                                } catch (error) {
+
+                                    console.error(
+                                        "Failed to close old Twitch EventSub socket:",
+                                        error
+                                    );
+
+                                }
+
+                            }
+
+
+                            return;
+
+                        }
+
+
+                        // ==============================
+                        // Fresh session
+                        // ==============================
+
+                        pendingSocket =
+                            null;
+
+
+                        socket =
+                            newSocket;
+
+
+                        reconnecting =
+                            false;
+
+
+                        reconnectAttempt =
+                            0;
+
+
+                        clearReconnectTimer();
+
+
+                        resetKeepaliveWatchdog();
+
+
+                        console.log(
+                            "Twitch EventSub session ready ✓"
+                        );
+
+
+                        await subscribeToRedemptions(
+                            twitchSession,
+                            sessionId
+                        );
+
+
+                        await subscribeToChat(
+                            twitchSession,
+                            sessionId
+                        );
+
+
+                        console.log(
+                            "Twitch EventSub subscriptions ready ✓"
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // ==================================
+                    // Keepalive
+                    // ==================================
+
+                    if (
+                        messageType ===
+                        "session_keepalive"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    // ==================================
+                    // Twitch reconnect request
+                    // ==================================
+
+                    if (
+                        messageType ===
+                        "session_reconnect"
+                    ) {
+
+                        const reconnectUrl =
+                            message.payload
+                                ?.session
+                                ?.reconnect_url;
+
+
+                        if (!reconnectUrl) {
+
+                            console.error(
+                                "Twitch requested an EventSub reconnect but did not provide a reconnect URL."
+                            );
+
+
+                            return;
+
+                        }
+
+
+                        if (reconnecting) {
+
+                            console.log(
+                                "Twitch EventSub reconnect already in progress."
+                            );
+
+
+                            return;
+
+                        }
+
+
+                        console.log(
+                            "Twitch requested EventSub reconnect."
+                        );
+
+
+                        reconnecting =
+                            true;
+
+
+                        // Keep the old active socket alive
+                        // until Twitch's replacement socket
+                        // has received session_welcome.
+
+                        connect(
+                            reconnectUrl,
+                            true
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // ==================================
+                    // Revocation
+                    // ==================================
+
+                    if (
+                        messageType ===
+                        "revocation"
+                    ) {
+
+                        console.warn(
+                            "Twitch EventSub subscription revoked:",
+                            message.payload
+                                ?.subscription
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // ==================================
+                    // Notification
+                    // ==================================
+
+                    if (
+                        messageType ===
+                        "notification"
+                    ) {
+
+                        const subscriptionType =
+                            message.payload
+                                ?.subscription
+                                ?.type;
+
+
+                        const event =
+                            message.payload
+                                ?.event;
+
+
+                        // ==============================
+                        // Channel Point redemption
+                        // ==============================
+
+                        if (
+                            subscriptionType ===
+                            "channel.channel_points_custom_reward_redemption.add"
+                        ) {
+
+                            await onRedemption?.(
+                                event
+                            );
+
+
+                            return;
+
+                        }
+
+
+                        // ==============================
+                        // Chat message
+                        // ==============================
+
+                        if (
+                            subscriptionType ===
+                            "channel.chat.message"
+                        ) {
+
+                            await onChatMessage?.(
+                                event
+                            );
+
+
+                            return;
+
+                        }
+
+                    }
+
+                } catch (error) {
+
                     console.error(
-                        "EventSub subscription revoked:",
-                        message.payload.subscription
+                        "Failed to process Twitch EventSub message:",
+                        error
                     );
 
-                    break;
                 }
 
-                default: {
-                    console.log(
-                        "Unknown EventSub message:",
-                        messageType
-                    );
-                }
             }
+        );
+
+
+        // ==================================================
+        // Error
+        // ==================================================
+
+        newSocket.on(
+            "error",
+            error => {
+
+                console.error(
+                    "Twitch EventSub WebSocket error:",
+                    error
+                );
+
+            }
+        );
+
+
+        // ==================================================
+        // Close
+        // ==================================================
+
+        newSocket.on(
+            "close",
+            (
+                code,
+                reason
+            ) => {
+
+                const reasonText =
+                    reason?.toString() ||
+                    "No reason provided";
+
+
+                // ==========================================
+                // Manual shutdown
+                // ==========================================
+
+                if (manuallyClosed) {
+
+                    console.log(
+                        "Twitch EventSub WebSocket closed."
+                    );
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Twitch replacement connection failed
+                // ==========================================
+
+                if (
+                    newSocket === replacementSocket
+                ) {
+
+                    replacementSocket =
+                        null;
+
+
+                    reconnecting =
+                        false;
+
+
+                    console.warn(
+                        `Twitch EventSub replacement connection failed. Code: ${code}. Reason: ${reasonText}`
+                    );
+
+
+                    clearKeepaliveWatchdog();
+
+
+                    const oldSocket =
+                        socket;
+
+
+                    socket =
+                        null;
+
+
+                    if (
+                        oldSocket &&
+                        oldSocket.readyState !==
+                            WebSocket.CLOSED
+                    ) {
+
+                        try {
+
+                            oldSocket.close();
+
+                        } catch (error) {
+
+                            console.error(
+                                "Failed to close old Twitch EventSub socket:",
+                                error
+                            );
+
+                        }
+
+                    }
+
+
+                    scheduleReconnect();
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Fresh connection attempt failed
+                // ==========================================
+                //
+                // This is the important case for errors
+                // such as ENOTFOUND while the internet is
+                // unavailable.
+                //
+
+                if (
+                    newSocket === pendingSocket
+                ) {
+
+                    pendingSocket =
+                        null;
+
+
+                    console.warn(
+                        `Twitch EventSub connection attempt failed. Code: ${code}. Reason: ${reasonText}`
+                    );
+
+
+                    scheduleReconnect();
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Active connection unexpectedly died
+                // ==========================================
+
+                if (
+                    newSocket === socket
+                ) {
+
+                    console.warn(
+                        `Twitch EventSub WebSocket disconnected. Code: ${code}. Reason: ${reasonText}`
+                    );
+
+
+                    clearKeepaliveWatchdog();
+
+
+                    socket =
+                        null;
+
+
+                    reconnecting =
+                        false;
+
+
+                    scheduleReconnect();
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Old socket
+                // ==========================================
+
+                console.log(
+                    "Old Twitch EventSub WebSocket closed."
+                );
+
+            }
+        );
+
+    }
+
+
+    // ==================================================
+    // EventSub keepalive watchdog
+    // ==================================================
+
+    function resetKeepaliveWatchdog() {
+
+        clearKeepaliveWatchdog();
+
+
+        if (
+            !keepaliveTimeoutMs ||
+            manuallyClosed ||
+            !socket
+        ) {
+
+            return;
+
+        }
+
+
+        keepaliveTimer =
+            setTimeout(
+                () => {
+
+                    keepaliveTimer =
+                        null;
+
+
+                    if (
+                        manuallyClosed ||
+                        !socket
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    console.warn(
+                        "Twitch EventSub keepalive timed out. Reconnecting..."
+                    );
+
+
+                    const staleSocket =
+                        socket;
+
+
+                    try {
+
+                        staleSocket.terminate();
+
+                    } catch (error) {
+
+                        console.error(
+                            "Failed to terminate stale Twitch EventSub connection:",
+                            error
+                        );
+
+
+                        if (
+                            socket === staleSocket
+                        ) {
+
+                            socket =
+                                null;
+
+                        }
+
+
+                        reconnecting =
+                            false;
+
+
+                        scheduleReconnect();
+
+                    }
+
+                },
+                keepaliveTimeoutMs +
+                    KEEPALIVE_GRACE_MS
+            );
+
+    }
+
+
+    // ==================================================
+    // Clear keepalive watchdog
+    // ==================================================
+
+    function clearKeepaliveWatchdog() {
+
+        if (!keepaliveTimer) {
+            return;
+        }
+
+
+        clearTimeout(
+            keepaliveTimer
+        );
+
+
+        keepaliveTimer =
+            null;
+
+    }
+
+
+    // ==================================================
+    // Automatic reconnect
+    // ==================================================
+
+    function scheduleReconnect() {
+
+        if (
+            manuallyClosed ||
+            reconnectTimer ||
+            pendingSocket
+        ) {
+
+            return;
+
+        }
+
+
+        reconnectAttempt +=
+            1;
+
+
+        // 1s → 2s → 4s → 8s → 16s → 30s
+        // Then remain capped at 30 seconds.
+
+        const delay =
+            Math.min(
+                1000 *
+                    (2 ** (reconnectAttempt - 1)),
+                MAX_RECONNECT_DELAY
+            );
+
+
+        console.log(
+            `Reconnecting to Twitch EventSub in ${delay / 1000}s...`
+        );
+
+
+        reconnectTimer =
+            setTimeout(
+                () => {
+
+                    reconnectTimer =
+                        null;
+
+
+                    if (manuallyClosed) {
+                        return;
+                    }
+
+
+                    console.log(
+                        `Twitch EventSub reconnect attempt ${reconnectAttempt}...`
+                    );
+
+
+                    connect(
+                        EVENTSUB_URL,
+                        false
+                    );
+
+                },
+                delay
+            );
+
+    }
+
+
+    // ==================================================
+    // Clear reconnect timer
+    // ==================================================
+
+    function clearReconnectTimer() {
+
+        if (!reconnectTimer) {
+            return;
+        }
+
+
+        clearTimeout(
+            reconnectTimer
+        );
+
+
+        reconnectTimer =
+            null;
+
+    }
+
+
+    // ==================================================
+    // Manual close
+    // ==================================================
+
+    function close() {
+
+        manuallyClosed =
+            true;
+
+
+        clearKeepaliveWatchdog();
+
+
+        clearReconnectTimer();
+
+
+        reconnecting =
+            false;
+
+
+        // Close a pending normal connection.
+
+        if (
+            pendingSocket &&
+            pendingSocket !== socket
+        ) {
+
+            try {
+
+                pendingSocket.close();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to close pending Twitch EventSub WebSocket:",
+                    error
+                );
+
+            }
+
+
+            pendingSocket =
+                null;
+
+        }
+
+
+        // Close a Twitch replacement connection.
+
+        if (
+            replacementSocket &&
+            replacementSocket !== socket
+        ) {
+
+            try {
+
+                replacementSocket.close();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to close Twitch EventSub replacement WebSocket:",
+                    error
+                );
+
+            }
+
+
+            replacementSocket =
+                null;
+
+        }
+
+
+        // Close the active connection.
+
+        if (!socket) {
+            return;
+        }
+
+
+        try {
+
+            socket.close();
+
         } catch (error) {
+
             console.error(
-                "Failed to process EventSub message:",
+                "Failed to close Twitch EventSub WebSocket:",
                 error
             );
+
         }
-    });
 
-    socket.on("error", (error) => {
-        console.error(
-            "EventSub WebSocket error:",
-            error
-        );
-    });
+    }
 
-    socket.on("close", (code, reason) => {
-        console.log(
-            "Disconnected from Twitch EventSub."
-        );
 
-        console.log(
-            "Close code:",
-            code
-        );
+    return {
+        connect,
+        close
+    };
 
-        if (reason) {
-            console.log(
-                "Reason:",
-                reason.toString()
-            );
-        }
-    });
-
-    return socket;
 }
+
+
+// ======================================================
+// Subscribe to Channel Point redemptions
+// ======================================================
 
 async function subscribeToRedemptions(
     twitchSession,
     sessionId
 ) {
-    console.log(
-        "Subscribing to Channel Point redemptions..."
-    );
 
-    const response = await fetch(
-        "https://api.twitch.tv/helix/eventsub/subscriptions",
-        {
-            method: "POST",
+    const response =
+        await twitchFetch(
+            twitchSession,
+            "https://api.twitch.tv/helix/eventsub/subscriptions",
+            {
 
-            headers: {
-                "Client-ID":
-                    config.twitch.clientId,
+                method:
+                    "POST",
 
-                "Authorization":
-                    `Bearer ${twitchSession.accessToken}`,
+                headers: {
 
-                "Content-Type":
-                    "application/json"
-            },
+                    "Client-ID":
+                        config.twitch.clientId,
 
-            body: JSON.stringify({
-                type:
-                    "channel.channel_points_custom_reward_redemption.add",
+                    "Authorization":
+                        `Bearer ${twitchSession.accessToken}`,
 
-                version:
-                    "1",
+                    "Content-Type":
+                        "application/json"
 
-                condition: {
-                    broadcaster_user_id:
-                        twitchSession.broadcaster.id
                 },
 
-                transport: {
-                    method:
-                        "websocket",
+                body:
+                    JSON.stringify({
 
-                    session_id:
-                        sessionId
-                }
-            })
-        }
-    );
+                        type:
+                            "channel.channel_points_custom_reward_redemption.add",
 
-    const data = await response.json();
+                        version:
+                            "1",
 
-    if (!response.ok) {
-        console.error(
-            "Failed to create EventSub subscription:",
-            data
+                        condition: {
+
+                            broadcaster_user_id:
+                                twitchSession
+                                    .broadcaster
+                                    .id
+
+                        },
+
+                        transport: {
+
+                            method:
+                                "websocket",
+
+                            session_id:
+                                sessionId
+
+                        }
+
+                    })
+
+            }
         );
 
-        return;
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            `Failed to subscribe to Channel Point redemptions: ${JSON.stringify(data)}`
+        );
+
     }
 
+
     console.log(
-        "Subscribed to Channel Point redemptions ✓"
+        "Channel Point redemption subscription ready ✓"
     );
+
 }

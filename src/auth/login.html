@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>EggGacha</title>
+
+    <link
+        rel="stylesheet"
+        href="/styles/theme.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/auth-files/login.css"
+    >
+</head>
+
+<body>
+
+<main class="login-page">
+
+    <section class="login-card">
+
+        <div class="logo">
+            🥚
+        </div>
+
+        <h1>
+            EggGacha
+        </h1>
+
+        <p
+            class="subtitle"
+            id="subtitle"
+        >
+            Connect your Twitch channel to start your dragon egg collection.
+        </p>
+
+
+        <!-- =============================================
+             NOT CONNECTED
+             ============================================= -->
+
+        <div
+            class="connection-state"
+            id="login-state"
+        >
+
+            <a
+                class="twitch-button"
+                href="/auth/twitch"
+            >
+                <span class="twitch-icon">
+                    ◈
+                </span>
+
+                Connect with Twitch
+            </a>
+
+            <div class="features">
+
+                <div class="feature">
+                    <span class="feature-icon">
+                        🎟️
+                    </span>
+
+                    <span>
+                        Channel Points
+                    </span>
+                </div>
+
+                <div class="feature">
+                    <span class="feature-icon">
+                        🥚
+                    </span>
+
+                    <span>
+                        Egg Collections
+                    </span>
+                </div>
+
+                <div class="feature">
+                    <span class="feature-icon">
+                        📺
+                    </span>
+
+                    <span>
+                        OBS Overlay
+                    </span>
+                </div>
+
+            </div>
+
+            <p class="permission-note">
+                EggGacha connects to Twitch so it can create and listen
+                for the EggGacha Channel Point reward.
+            </p>
+
+        </div>
+
+
+        <!-- =============================================
+             CONNECTED
+             ============================================= -->
+
+        <div
+            class="connected-state"
+            id="connected-state"
+        >
+
+            <div class="connected-badge">
+                <span class="connected-dot"></span>
+
+                Twitch Connected
+            </div>
+
+            <div class="welcome">
+
+                <span class="welcome-label">
+                    Welcome
+                </span>
+
+                <strong id="connected-username">
+                    Twitch User
+                </strong>
+
+            </div>
+
+            <p class="connected-description">
+                EggGacha is now connected and listening for
+                Channel Point redemptions.
+            </p>
+
+            <div class="connected-actions">
+
+                <a
+                    class="primary-button"
+                    id="collection-link"
+                    href="#"
+                >
+                    🥚 View Collection
+                </a>
+
+                <a
+                    class="secondary-button"
+                    href="/overlay"
+                >
+                    📺 Open Overlay
+                </a>
+
+            </div>
+
+            <div class="status-panel">
+
+                <div class="status-item">
+
+                    <span class="status-dot"></span>
+
+                    <span>
+                        Twitch
+                    </span>
+
+                    <strong>
+                        Connected
+                    </strong>
+
+                </div>
+
+                <div class="status-item">
+
+                    <span class="status-dot"></span>
+
+                    <span>
+                        EggGacha
+                    </span>
+
+                    <strong>
+                        Running
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="/auth-files/login.js"></script>
+
+</body>
+
+</html>

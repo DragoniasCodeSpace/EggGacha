@@ -38,17 +38,18 @@ loadCollection();
 
 async function loadCollection() {
 
-    const twitchUserId =
-        getTwitchUserId();
+    const collectionToken =
+        getCollectionToken();
 
 
-    if (!twitchUserId) {
+    if (!collectionToken) {
 
         showError(
-            "No Twitch user ID was provided."
+            "No collection token was provided."
         );
 
         return;
+
     }
 
 
@@ -56,7 +57,7 @@ async function loadCollection() {
 
         const response =
             await fetch(
-                `/api/collection/${twitchUserId}`
+                `/api/collection/${encodeURIComponent(collectionToken)}`
             );
 
 
@@ -65,6 +66,7 @@ async function loadCollection() {
             throw new Error(
                 "Collection could not be loaded."
             );
+
         }
 
 
@@ -82,11 +84,13 @@ async function loadCollection() {
         showError(
             "Failed to load collection."
         );
+
     }
+
 }
 
 
-function getTwitchUserId() {
+function getCollectionToken() {
 
     const parts =
         window.location.pathname
@@ -97,6 +101,7 @@ function getTwitchUserId() {
     return parts[
         parts.length - 1
     ];
+
 }
 
 
@@ -134,8 +139,7 @@ function renderCollection(data) {
      * Clear existing rarity sections.
      */
 
-    raritySections.innerHTML =
-        "";
+    raritySections.replaceChildren();
 
 
     /*
@@ -174,7 +178,9 @@ function renderCollection(data) {
         raritySections.appendChild(
             section
         );
+
     }
+
 }
 
 
@@ -273,6 +279,7 @@ function createRaritySection(
         grid.appendChild(
             card
         );
+
     }
 
 
@@ -301,6 +308,7 @@ function createRaritySection(
 
 
     return section;
+
 }
 
 
@@ -317,92 +325,321 @@ function createEggCard(egg) {
     );
 
 
-    /*
-     * Unlocked egg
-     */
-
     if (egg.unlocked) {
 
-        card.classList.add(
-            "unlocked",
-            egg.rarity
+        return createUnlockedEggCard(
+            card,
+            egg
         );
 
-
-        card.innerHTML = `
-            <div class="egg-image-container">
-
-                <img
-                    class="egg-image"
-                    src="${egg.image}"
-                    alt="${egg.name}"
-                >
-
-                <div class="quantity">
-                    ×${egg.quantity}
-                </div>
-
-            </div>
-
-
-            <div class="egg-name">
-                ${egg.name}
-            </div>
-
-
-            <div class="egg-rarity">
-                ${egg.rarity}
-            </div>
-        `;
-
-
-        return card;
     }
 
 
+    return createLockedEggCard(
+        card,
+        egg
+    );
+
+}
+
+
+function createUnlockedEggCard(
+    card,
+    egg
+) {
+
+    card.classList.add(
+        "unlocked",
+        egg.rarity
+    );
+
+
     /*
-     * Locked egg
+     * Image container
      */
+
+    const imageContainer =
+        document.createElement(
+            "div"
+        );
+
+
+    imageContainer.classList.add(
+        "egg-image-container"
+    );
+
+
+    /*
+     * Egg image
+     */
+
+    const image =
+        document.createElement(
+            "img"
+        );
+
+
+    image.classList.add(
+        "egg-image"
+    );
+
+
+    image.src =
+        egg.image;
+
+
+    image.alt =
+        egg.name;
+
+
+    /*
+     * Quantity
+     */
+
+    const quantity =
+        document.createElement(
+            "div"
+        );
+
+
+    quantity.classList.add(
+        "quantity"
+    );
+
+
+    quantity.textContent =
+        `×${egg.quantity}`;
+
+
+    /*
+     * Egg name
+     */
+
+    const name =
+        document.createElement(
+            "div"
+        );
+
+
+    name.classList.add(
+        "egg-name"
+    );
+
+
+    name.textContent =
+        egg.name;
+
+
+    /*
+     * Egg rarity
+     */
+
+    const rarity =
+        document.createElement(
+            "div"
+        );
+
+
+    rarity.classList.add(
+        "egg-rarity"
+    );
+
+
+    rarity.textContent =
+        egg.rarity;
+
+
+    /*
+     * Assemble card
+     */
+
+    imageContainer.appendChild(
+        image
+    );
+
+
+    imageContainer.appendChild(
+        quantity
+    );
+
+
+    card.appendChild(
+        imageContainer
+    );
+
+
+    card.appendChild(
+        name
+    );
+
+
+    card.appendChild(
+        rarity
+    );
+
+
+    return card;
+
+}
+
+
+function createLockedEggCard(
+    card,
+    egg
+) {
 
     card.classList.add(
         "locked"
     );
 
 
-    card.innerHTML = `
-        <div class="egg-image-container">
+    /*
+     * Image container
+     */
 
-            <img
-                class="egg-image locked-image"
-                src="${egg.image}"
-                alt="Locked egg"
-            >
-
-            <div class="lock">
-                🔒
-            </div>
-
-        </div>
+    const imageContainer =
+        document.createElement(
+            "div"
+        );
 
 
-        <div class="egg-name">
-            ???
-        </div>
+    imageContainer.classList.add(
+        "egg-image-container"
+    );
 
 
-        <div class="egg-rarity">
-            Unknown
-        </div>
-    `;
+    /*
+     * Locked egg image
+     */
+
+    const image =
+        document.createElement(
+            "img"
+        );
+
+
+    image.classList.add(
+        "egg-image",
+        "locked-image"
+    );
+
+
+    image.src =
+        egg.image;
+
+
+    image.alt =
+        "Locked egg";
+
+
+    /*
+     * Lock icon
+     */
+
+    const lock =
+        document.createElement(
+            "div"
+        );
+
+
+    lock.classList.add(
+        "lock"
+    );
+
+
+    lock.textContent =
+        "🔒";
+
+
+    /*
+     * Hidden egg name
+     */
+
+    const name =
+        document.createElement(
+            "div"
+        );
+
+
+    name.classList.add(
+        "egg-name"
+    );
+
+
+    name.textContent =
+        "???";
+
+
+    /*
+     * Hidden rarity
+     */
+
+    const rarity =
+        document.createElement(
+            "div"
+        );
+
+
+    rarity.classList.add(
+        "egg-rarity"
+    );
+
+
+    rarity.textContent =
+        "Unknown";
+
+
+    /*
+     * Assemble card
+     */
+
+    imageContainer.appendChild(
+        image
+    );
+
+
+    imageContainer.appendChild(
+        lock
+    );
+
+
+    card.appendChild(
+        imageContainer
+    );
+
+
+    card.appendChild(
+        name
+    );
+
+
+    card.appendChild(
+        rarity
+    );
 
 
     return card;
+
 }
 
 
 function showError(message) {
 
-    raritySections.innerHTML = `
-        <p>${message}</p>
-    `;
+    raritySections.replaceChildren();
+
+
+    const error =
+        document.createElement(
+            "p"
+        );
+
+
+    error.textContent =
+        message;
+
+
+    raritySections.appendChild(
+        error
+    );
+
 }
