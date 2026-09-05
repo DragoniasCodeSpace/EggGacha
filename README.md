@@ -686,7 +686,7 @@ The egg names, rarity tiers, and rarity distribution were designed collaborative
 
 Egg artwork was created by:
 
-**l0caldoodles / BoxxDude**
+**l0caldoodles / Boxxdude**
 
 Instagram:  
 https://www.instagram.com/l0caldoodles/
@@ -789,5 +789,5 @@ See the **Credits** section for artwork attribution.
 </p>
 
 <p align="center">
-  Built by <strong>Undyne0123</strong> for <strong>Dragolaminius</strong>
+  Built by <strong>Undyne0123</strong> for <strong>DragoLaminius</strong>
 </p>
