@@ -30,9 +30,14 @@ const __dirname =
 // that Twitch callbacks belong to login requests that
 // originated from EggGacha.
 //
+// Each state expires after 10 minutes.
+//
 
 const validStates =
-    new Set();
+    new Map();
+
+const OAUTH_STATE_LIFETIME =
+    10 * 60 * 1000;
 
 
 // ======================================================
@@ -73,6 +78,12 @@ export function registerAuthRoutes(
         "/auth/twitch",
         (req, res) => {
 
+            // Remove any expired states before creating
+            // a new one.
+
+            cleanupExpiredStates();
+
+
             // Generate a random state value.
             // This protects the OAuth flow against CSRF.
 
@@ -82,8 +93,14 @@ export function registerAuthRoutes(
                     .toString("hex");
 
 
-            validStates.add(
-                state
+            const expiresAt =
+                Date.now() +
+                OAUTH_STATE_LIFETIME;
+
+
+            validStates.set(
+                state,
+                expiresAt
             );
 
 
@@ -180,10 +197,13 @@ export function registerAuthRoutes(
             // Validate OAuth state
             // ==========================================
 
-            if (
-                !state ||
-                !validStates.has(state)
-            ) {
+            const stateExpiresAt =
+                state
+                    ? validStates.get(state)
+                    : null;
+
+
+            if (!stateExpiresAt) {
 
                 console.error(
                     "Invalid Twitch OAuth state."
@@ -200,10 +220,32 @@ export function registerAuthRoutes(
 
 
             // State can only be used once.
+            // Delete it before doing anything else.
 
             validStates.delete(
                 state
             );
+
+
+            // Make sure the state has not expired.
+
+            if (
+                Date.now() >
+                stateExpiresAt
+            ) {
+
+                console.error(
+                    "Expired Twitch OAuth state."
+                );
+
+
+                return res
+                    .status(400)
+                    .send(
+                        "Twitch authentication expired. Please try connecting again."
+                    );
+
+            }
 
 
             // ==========================================
@@ -323,6 +365,10 @@ export function registerAuthRoutes(
                 };
 
 
+                // ======================================
+                // Save encrypted Twitch session
+                // ======================================
+
                 saveTwitchSession(
                     twitchSession
                 );
@@ -341,13 +387,6 @@ export function registerAuthRoutes(
                 // ======================================
                 // Notify EggGacha
                 // ======================================
-                //
-                // index.js uses this to:
-                //
-                // - create/find the EggGacha reward
-                // - connect EventSub
-                // - start listening for redemptions
-                //
 
                 await onAuthenticated(
                     twitchSession
@@ -360,6 +399,7 @@ export function registerAuthRoutes(
 
                 const params =
                     new URLSearchParams({
+
                         connected:
                             "true",
 
@@ -367,6 +407,7 @@ export function registerAuthRoutes(
                             twitchSession
                                 .broadcaster
                                 .displayName
+
                     });
 
 
@@ -392,5 +433,39 @@ export function registerAuthRoutes(
 
         }
     );
+
+}
+
+
+// ======================================================
+// Remove expired OAuth states
+// ======================================================
+
+function cleanupExpiredStates() {
+
+    const now =
+        Date.now();
+
+
+    for (
+        const [
+            state,
+            expiresAt
+        ]
+        of validStates
+    ) {
+
+        if (
+            now >
+            expiresAt
+        ) {
+
+            validStates.delete(
+                state
+            );
+
+        }
+
+    }
 
 }

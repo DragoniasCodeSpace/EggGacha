@@ -1,6 +1,11 @@
 import db from "../database/database.js";
 import { config } from "../config/config.js";
 
+import {
+    encrypt,
+    decrypt
+} from "../security/encryption.js";
+
 
 // ======================================================
 // Save Twitch session
@@ -9,6 +14,18 @@ import { config } from "../config/config.js";
 export function saveTwitchSession(
     twitchSession
 ) {
+
+    const encryptedAccessToken =
+        encrypt(
+            twitchSession.accessToken
+        );
+
+
+    const encryptedRefreshToken =
+        encrypt(
+            twitchSession.refreshToken
+        );
+
 
     db.prepare(`
         INSERT INTO twitch_sessions (
@@ -32,8 +49,8 @@ export function saveTwitchSession(
         twitchSession.broadcaster.id,
         twitchSession.broadcaster.login,
         twitchSession.broadcaster.displayName,
-        twitchSession.accessToken,
-        twitchSession.refreshToken
+        encryptedAccessToken,
+        encryptedRefreshToken
     );
 
 
@@ -67,10 +84,14 @@ export function loadTwitchSession() {
     return {
 
         accessToken:
-            savedSession.access_token,
+            decrypt(
+                savedSession.access_token
+            ),
 
         refreshToken:
-            savedSession.refresh_token,
+            decrypt(
+                savedSession.refresh_token
+            ),
 
         broadcaster: {
 
@@ -126,86 +147,167 @@ export async function validateTwitchSession(
     twitchSession
 ) {
 
-    const response =
-        await fetch(
-            "https://id.twitch.tv/oauth2/validate",
-            {
-                headers: {
-                    "Authorization":
-                        `Bearer ${twitchSession.accessToken}`
-                }
-            }
+    let response =
+        await requestTokenValidation(
+            twitchSession.accessToken
         );
 
+
+    /*
+     * Token is valid.
+     */
 
     if (response.ok) {
 
-        const data =
-            await response.json();
-
-
-        if (
-            data.client_id !==
-            config.twitch.clientId
-        ) {
-
-            throw new Error(
-                "Saved Twitch token belongs to a different Twitch application."
-            );
-
-        }
-
-
-        if (
-            data.user_id !==
-            twitchSession.broadcaster.id
-        ) {
-
-            throw new Error(
-                "Saved Twitch token belongs to a different broadcaster."
-            );
-
-        }
-
-
-        return data;
+        return await validateTokenResponse(
+            response,
+            twitchSession
+        );
 
     }
 
 
-    // Invalid/expired access token.
-    // Try the refresh token.
+    /*
+     * Anything other than 401 is not a token-expiry issue.
+     */
 
     if (
-        response.status === 401
+        response.status !== 401
     ) {
 
-        console.log(
-            "Twitch access token is no longer valid. Refreshing..."
-        );
+        const data =
+            await safeJson(
+                response
+            );
 
 
-        await refreshTwitchSession(
-            twitchSession
-        );
-
-
-        return await validateTwitchSession(
-            twitchSession
+        throw new Error(
+            `Failed to validate Twitch session: ${JSON.stringify(data)}`
         );
 
     }
 
 
-    const data =
-        await safeJson(
-            response
+    /*
+     * Access token expired or became invalid.
+     *
+     * Refresh exactly once.
+     */
+
+    console.log(
+        "Twitch access token is no longer valid. Refreshing..."
+    );
+
+
+    await refreshTwitchSession(
+        twitchSession
+    );
+
+
+    /*
+     * Retry validation exactly once using the new token.
+     */
+
+    response =
+        await requestTokenValidation(
+            twitchSession.accessToken
         );
 
 
-    throw new Error(
-        `Failed to validate Twitch session: ${JSON.stringify(data)}`
+    if (!response.ok) {
+
+        const data =
+            await safeJson(
+                response
+            );
+
+
+        throw new Error(
+            `Twitch token remained invalid after refresh: ${JSON.stringify(data)}`
+        );
+
+    }
+
+
+    return await validateTokenResponse(
+        response,
+        twitchSession
     );
+
+}
+
+
+// ======================================================
+// Request Twitch token validation
+// ======================================================
+
+async function requestTokenValidation(
+    accessToken
+) {
+
+    return await fetch(
+        "https://id.twitch.tv/oauth2/validate",
+        {
+            headers: {
+
+                "Authorization":
+                    `Bearer ${accessToken}`
+
+            }
+        }
+    );
+
+}
+
+
+// ======================================================
+// Validate Twitch token response
+// ======================================================
+
+async function validateTokenResponse(
+    response,
+    twitchSession
+) {
+
+    const data =
+        await response.json();
+
+
+    /*
+     * Make sure this token belongs to this EggGacha
+     * Twitch application.
+     */
+
+    if (
+        data.client_id !==
+        config.twitch.clientId
+    ) {
+
+        throw new Error(
+            "Saved Twitch token belongs to a different Twitch application."
+        );
+
+    }
+
+
+    /*
+     * Make sure this token belongs to the broadcaster
+     * stored in the session.
+     */
+
+    if (
+        data.user_id !==
+        twitchSession.broadcaster.id
+    ) {
+
+        throw new Error(
+            "Saved Twitch token belongs to a different broadcaster."
+        );
+
+    }
+
+
+    return data;
 
 }
 
@@ -259,16 +361,20 @@ export async function refreshTwitchSession(
         await fetch(
             "https://id.twitch.tv/oauth2/token",
             {
+
                 method:
                     "POST",
 
                 headers: {
+
                     "Content-Type":
                         "application/x-www-form-urlencoded"
+
                 },
 
                 body:
                     body.toString()
+
             }
         );
 
@@ -301,8 +407,12 @@ export async function refreshTwitchSession(
         data.access_token;
 
 
-    // Twitch may rotate the refresh token.
-    // Always use the new one when provided.
+    /*
+     * Twitch may rotate the refresh token.
+     *
+     * Always replace the old token when Twitch sends
+     * a new one.
+     */
 
     if (data.refresh_token) {
 
@@ -311,6 +421,13 @@ export async function refreshTwitchSession(
 
     }
 
+
+    /*
+     * Persist the refreshed tokens.
+     *
+     * saveTwitchSession() encrypts both tokens before
+     * writing them to SQLite.
+     */
 
     saveTwitchSession(
         twitchSession
@@ -345,7 +462,9 @@ export async function twitchFetch(
         );
 
 
-    // Twitch recommends refreshing reactively after 401.
+    /*
+     * Normal request.
+     */
 
     if (
         response.status !== 401
@@ -355,6 +474,10 @@ export async function twitchFetch(
 
     }
 
+
+    /*
+     * Twitch recommends refreshing reactively after a 401.
+     */
 
     console.log(
         "Twitch API returned 401. Refreshing access token..."
@@ -366,7 +489,9 @@ export async function twitchFetch(
     );
 
 
-    // Retry exactly once using the new token.
+    /*
+     * Retry exactly once using the refreshed token.
+     */
 
     response =
         await authenticatedRequest(
@@ -396,6 +521,12 @@ async function authenticatedRequest(
             options.headers ?? {}
         );
 
+
+    /*
+     * Always overwrite these headers so callers cannot
+     * accidentally keep using an old access token after
+     * refresh.
+     */
 
     headers.set(
         "Client-ID",
@@ -498,11 +629,13 @@ async function safeJson(
     } catch {
 
         return {
+
             status:
                 response.status,
 
             statusText:
                 response.statusText
+
         };
 
     }

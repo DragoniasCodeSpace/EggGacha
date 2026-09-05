@@ -8,6 +8,12 @@ import { twitchFetch } from "./session.js";
 const EVENTSUB_URL =
     "wss://eventsub.wss.twitch.tv/ws";
 
+const MAX_RECONNECT_DELAY =
+    30_000;
+
+const KEEPALIVE_GRACE_MS =
+    5_000;
+
 
 // ======================================================
 // Connect to Twitch EventSub
@@ -51,11 +57,32 @@ function createConnectionManager(
     let socket =
         null;
 
+    // A normal connection that has not received
+    // session_welcome yet.
+    let pendingSocket =
+        null;
+
+    // A Twitch-requested replacement connection.
+    let replacementSocket =
+        null;
+
     let reconnecting =
         false;
 
     let manuallyClosed =
         false;
+
+    let reconnectTimer =
+        null;
+
+    let reconnectAttempt =
+        0;
+
+    let keepaliveTimer =
+        null;
+
+    let keepaliveTimeoutMs =
+        null;
 
 
     // ==================================================
@@ -66,6 +93,11 @@ function createConnectionManager(
         url,
         isReconnect
     ) {
+
+        if (manuallyClosed) {
+            return;
+        }
+
 
         console.log(
             isReconnect
@@ -79,6 +111,23 @@ function createConnectionManager(
                 url
             );
 
+
+        if (isReconnect) {
+
+            replacementSocket =
+                newSocket;
+
+        } else {
+
+            pendingSocket =
+                newSocket;
+
+        }
+
+
+        // ==================================================
+        // Open
+        // ==================================================
 
         newSocket.on(
             "open",
@@ -94,6 +143,10 @@ function createConnectionManager(
         );
 
 
+        // ==================================================
+        // Message
+        // ==================================================
+
         newSocket.on(
             "message",
             async rawMessage => {
@@ -104,6 +157,18 @@ function createConnectionManager(
                         JSON.parse(
                             rawMessage.toString()
                         );
+
+
+                    // Any message from the active socket
+                    // proves the connection is alive.
+
+                    if (
+                        newSocket === socket
+                    ) {
+
+                        resetKeepaliveWatchdog();
+
+                    }
 
 
                     const messageType =
@@ -126,6 +191,12 @@ function createConnectionManager(
                                 ?.id;
 
 
+                        const keepaliveTimeoutSeconds =
+                            message.payload
+                                ?.session
+                                ?.keepalive_timeout_seconds;
+
+
                         if (!sessionId) {
 
                             throw new Error(
@@ -135,14 +206,28 @@ function createConnectionManager(
                         }
 
 
+                        if (
+                            Number.isFinite(
+                                keepaliveTimeoutSeconds
+                            ) &&
+                            keepaliveTimeoutSeconds > 0
+                        ) {
+
+                            keepaliveTimeoutMs =
+                                keepaliveTimeoutSeconds *
+                                1000;
+
+
+                            console.log(
+                                `Twitch EventSub keepalive timeout: ${keepaliveTimeoutSeconds}s`
+                            );
+
+                        }
+
+
                         // ==============================
-                        // Reconnect session
+                        // Twitch-requested reconnect
                         // ==============================
-                        //
-                        // Twitch transfers the existing
-                        // subscriptions to this session.
-                        // Do NOT create them again.
-                        //
 
                         if (isReconnect) {
 
@@ -159,8 +244,22 @@ function createConnectionManager(
                                 newSocket;
 
 
+                            replacementSocket =
+                                null;
+
+
                             reconnecting =
                                 false;
+
+
+                            reconnectAttempt =
+                                0;
+
+
+                            clearReconnectTimer();
+
+
+                            resetKeepaliveWatchdog();
 
 
                             if (
@@ -190,11 +289,29 @@ function createConnectionManager(
 
 
                         // ==============================
-                        // Initial session
+                        // Fresh session
                         // ==============================
+
+                        pendingSocket =
+                            null;
+
 
                         socket =
                             newSocket;
+
+
+                        reconnecting =
+                            false;
+
+
+                        reconnectAttempt =
+                            0;
+
+
+                        clearReconnectTimer();
+
+
+                        resetKeepaliveWatchdog();
 
 
                         console.log(
@@ -211,6 +328,11 @@ function createConnectionManager(
                         await subscribeToChat(
                             twitchSession,
                             sessionId
+                        );
+
+
+                        console.log(
+                            "Twitch EventSub subscriptions ready ✓"
                         );
 
 
@@ -281,9 +403,9 @@ function createConnectionManager(
                             true;
 
 
-                        // IMPORTANT:
-                        // Keep the old socket alive until
-                        // the replacement socket is ready.
+                        // Keep the old active socket alive
+                        // until Twitch's replacement socket
+                        // has received session_welcome.
 
                         connect(
                             reconnectUrl,
@@ -422,22 +544,9 @@ function createConnectionManager(
                     "No reason provided";
 
 
-                // This was the old socket during a
-                // successful Twitch reconnect.
-
-                if (
-                    newSocket !== socket
-                ) {
-
-                    console.log(
-                        "Old Twitch EventSub WebSocket closed."
-                    );
-
-
-                    return;
-
-                }
-
+                // ==========================================
+                // Manual shutdown
+                // ==========================================
 
                 if (manuallyClosed) {
 
@@ -451,8 +560,136 @@ function createConnectionManager(
                 }
 
 
-                console.warn(
-                    `Twitch EventSub WebSocket disconnected. Code: ${code}. Reason: ${reasonText}`
+                // ==========================================
+                // Twitch replacement connection failed
+                // ==========================================
+
+                if (
+                    newSocket === replacementSocket
+                ) {
+
+                    replacementSocket =
+                        null;
+
+
+                    reconnecting =
+                        false;
+
+
+                    console.warn(
+                        `Twitch EventSub replacement connection failed. Code: ${code}. Reason: ${reasonText}`
+                    );
+
+
+                    clearKeepaliveWatchdog();
+
+
+                    const oldSocket =
+                        socket;
+
+
+                    socket =
+                        null;
+
+
+                    if (
+                        oldSocket &&
+                        oldSocket.readyState !==
+                            WebSocket.CLOSED
+                    ) {
+
+                        try {
+
+                            oldSocket.close();
+
+                        } catch (error) {
+
+                            console.error(
+                                "Failed to close old Twitch EventSub socket:",
+                                error
+                            );
+
+                        }
+
+                    }
+
+
+                    scheduleReconnect();
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Fresh connection attempt failed
+                // ==========================================
+                //
+                // This is the important case for errors
+                // such as ENOTFOUND while the internet is
+                // unavailable.
+                //
+
+                if (
+                    newSocket === pendingSocket
+                ) {
+
+                    pendingSocket =
+                        null;
+
+
+                    console.warn(
+                        `Twitch EventSub connection attempt failed. Code: ${code}. Reason: ${reasonText}`
+                    );
+
+
+                    scheduleReconnect();
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Active connection unexpectedly died
+                // ==========================================
+
+                if (
+                    newSocket === socket
+                ) {
+
+                    console.warn(
+                        `Twitch EventSub WebSocket disconnected. Code: ${code}. Reason: ${reasonText}`
+                    );
+
+
+                    clearKeepaliveWatchdog();
+
+
+                    socket =
+                        null;
+
+
+                    reconnecting =
+                        false;
+
+
+                    scheduleReconnect();
+
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // Old socket
+                // ==========================================
+
+                console.log(
+                    "Old Twitch EventSub WebSocket closed."
                 );
 
             }
@@ -462,21 +699,276 @@ function createConnectionManager(
 
 
     // ==================================================
+    // EventSub keepalive watchdog
+    // ==================================================
+
+    function resetKeepaliveWatchdog() {
+
+        clearKeepaliveWatchdog();
+
+
+        if (
+            !keepaliveTimeoutMs ||
+            manuallyClosed ||
+            !socket
+        ) {
+
+            return;
+
+        }
+
+
+        keepaliveTimer =
+            setTimeout(
+                () => {
+
+                    keepaliveTimer =
+                        null;
+
+
+                    if (
+                        manuallyClosed ||
+                        !socket
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    console.warn(
+                        "Twitch EventSub keepalive timed out. Reconnecting..."
+                    );
+
+
+                    const staleSocket =
+                        socket;
+
+
+                    try {
+
+                        staleSocket.terminate();
+
+                    } catch (error) {
+
+                        console.error(
+                            "Failed to terminate stale Twitch EventSub connection:",
+                            error
+                        );
+
+
+                        if (
+                            socket === staleSocket
+                        ) {
+
+                            socket =
+                                null;
+
+                        }
+
+
+                        reconnecting =
+                            false;
+
+
+                        scheduleReconnect();
+
+                    }
+
+                },
+                keepaliveTimeoutMs +
+                    KEEPALIVE_GRACE_MS
+            );
+
+    }
+
+
+    // ==================================================
+    // Clear keepalive watchdog
+    // ==================================================
+
+    function clearKeepaliveWatchdog() {
+
+        if (!keepaliveTimer) {
+            return;
+        }
+
+
+        clearTimeout(
+            keepaliveTimer
+        );
+
+
+        keepaliveTimer =
+            null;
+
+    }
+
+
+    // ==================================================
+    // Automatic reconnect
+    // ==================================================
+
+    function scheduleReconnect() {
+
+        if (
+            manuallyClosed ||
+            reconnectTimer ||
+            pendingSocket
+        ) {
+
+            return;
+
+        }
+
+
+        reconnectAttempt +=
+            1;
+
+
+        // 1s → 2s → 4s → 8s → 16s → 30s
+        // Then remain capped at 30 seconds.
+
+        const delay =
+            Math.min(
+                1000 *
+                    (2 ** (reconnectAttempt - 1)),
+                MAX_RECONNECT_DELAY
+            );
+
+
+        console.log(
+            `Reconnecting to Twitch EventSub in ${delay / 1000}s...`
+        );
+
+
+        reconnectTimer =
+            setTimeout(
+                () => {
+
+                    reconnectTimer =
+                        null;
+
+
+                    if (manuallyClosed) {
+                        return;
+                    }
+
+
+                    console.log(
+                        `Twitch EventSub reconnect attempt ${reconnectAttempt}...`
+                    );
+
+
+                    connect(
+                        EVENTSUB_URL,
+                        false
+                    );
+
+                },
+                delay
+            );
+
+    }
+
+
+    // ==================================================
+    // Clear reconnect timer
+    // ==================================================
+
+    function clearReconnectTimer() {
+
+        if (!reconnectTimer) {
+            return;
+        }
+
+
+        clearTimeout(
+            reconnectTimer
+        );
+
+
+        reconnectTimer =
+            null;
+
+    }
+
+
+    // ==================================================
     // Manual close
     // ==================================================
-    //
-    // index.js already calls:
-    //
-    // eventSubSocket.close()
-    //
-    // So we preserve that interface.
-    //
 
     function close() {
 
         manuallyClosed =
             true;
 
+
+        clearKeepaliveWatchdog();
+
+
+        clearReconnectTimer();
+
+
+        reconnecting =
+            false;
+
+
+        // Close a pending normal connection.
+
+        if (
+            pendingSocket &&
+            pendingSocket !== socket
+        ) {
+
+            try {
+
+                pendingSocket.close();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to close pending Twitch EventSub WebSocket:",
+                    error
+                );
+
+            }
+
+
+            pendingSocket =
+                null;
+
+        }
+
+
+        // Close a Twitch replacement connection.
+
+        if (
+            replacementSocket &&
+            replacementSocket !== socket
+        ) {
+
+            try {
+
+                replacementSocket.close();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to close Twitch EventSub replacement WebSocket:",
+                    error
+                );
+
+            }
+
+
+            replacementSocket =
+                null;
+
+        }
+
+
+        // Close the active connection.
 
         if (!socket) {
             return;
@@ -521,6 +1013,7 @@ async function subscribeToRedemptions(
             twitchSession,
             "https://api.twitch.tv/helix/eventsub/subscriptions",
             {
+
                 method:
                     "POST",
 

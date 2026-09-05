@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
 
 
@@ -53,6 +54,7 @@ db.exec(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         twitch_user_id TEXT NOT NULL UNIQUE,
         display_name TEXT NOT NULL,
+        collection_token TEXT UNIQUE,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -96,6 +98,87 @@ db.exec(`
         updated_at TEXT NOT NULL
             DEFAULT CURRENT_TIMESTAMP
     );
+`);
+
+
+// ======================================================
+// Database migrations
+// ======================================================
+
+const userColumns =
+    db.prepare(
+        "PRAGMA table_info(users)"
+    ).all();
+
+
+const hasCollectionToken =
+    userColumns.some(
+        column =>
+            column.name ===
+            "collection_token"
+    );
+
+
+if (!hasCollectionToken) {
+
+    console.log(
+        "Adding collection tokens to users..."
+    );
+
+
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN collection_token TEXT
+    `);
+
+}
+
+
+// ======================================================
+// Generate missing collection tokens
+// ======================================================
+
+const usersWithoutToken =
+    db.prepare(`
+        SELECT id
+        FROM users
+        WHERE collection_token IS NULL
+           OR collection_token = ''
+    `).all();
+
+
+const updateCollectionToken =
+    db.prepare(`
+        UPDATE users
+        SET collection_token = ?
+        WHERE id = ?
+    `);
+
+
+for (
+    const user
+    of usersWithoutToken
+) {
+
+    updateCollectionToken.run(
+        crypto
+            .randomBytes(32)
+            .toString("base64url"),
+
+        user.id
+    );
+
+}
+
+
+// ======================================================
+// Collection token uniqueness
+// ======================================================
+
+db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS
+        idx_users_collection_token
+    ON users(collection_token)
 `);
 
 

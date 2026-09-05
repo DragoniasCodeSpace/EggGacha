@@ -3,7 +3,12 @@ import "dotenv/config";
 import express from "express";
 import http from "http";
 import path from "path";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 import { fileURLToPath } from "url";
+
+import { validateConfig } from "./config/validateConfig.js";
+import { config } from "./config/config.js";
 
 import { registerAuthRoutes } from "./twitch/auth.js";
 import { connectToEventSub } from "./twitch/eventSub.js";
@@ -20,12 +25,10 @@ import {
 import { rollEgg } from "./gacha/rollEgg.js";
 import { eggs } from "./gacha/eggs.js";
 
-import { config } from "./config/config.js";
-
 import {
     getOrCreateUser,
     getUserByTwitchId,
-    getUserByDisplayName
+    getUserByCollectionToken
 } from "./database/users.js";
 
 import {
@@ -55,6 +58,13 @@ const __dirname =
 
 
 // ======================================================
+// Configuration validation
+// ======================================================
+
+validateConfig();
+
+
+// ======================================================
 // Express + HTTP server
 // ======================================================
 
@@ -65,6 +75,167 @@ const server =
     http.createServer(
         app
     );
+
+
+// ======================================================
+// Express security
+// ======================================================
+
+// Hide Express implementation details.
+
+app.disable(
+    "x-powered-by"
+);
+
+
+// Security headers.
+
+app.use(
+    helmet({
+
+        contentSecurityPolicy: {
+
+            directives: {
+
+                defaultSrc: [
+                    "'self'"
+                ],
+
+                scriptSrc: [
+                    "'self'"
+                ],
+
+                styleSrc: [
+                    "'self'"
+                ],
+
+                imgSrc: [
+                    "'self'",
+                    "data:"
+                ],
+
+                connectSrc: [
+                    "'self'",
+                    "ws:",
+                    "wss:"
+                ],
+
+                objectSrc: [
+                    "'none'"
+                ],
+
+                baseUri: [
+                    "'self'"
+                ],
+
+                frameAncestors: [
+                    "'self'"
+                ]
+
+            }
+
+        },
+
+        crossOriginEmbedderPolicy:
+            false
+
+    })
+);
+
+
+// Limit request body sizes.
+
+app.use(
+    express.json({
+
+        limit:
+            "16kb"
+
+    })
+);
+
+
+app.use(
+    express.urlencoded({
+
+        extended:
+            false,
+
+        limit:
+            "16kb"
+
+    })
+);
+
+
+// ======================================================
+// Rate limiting
+// ======================================================
+
+const apiLimiter =
+    rateLimit({
+
+        windowMs:
+            60 * 1000,
+
+        limit:
+            120,
+
+        standardHeaders:
+            "draft-8",
+
+        legacyHeaders:
+            false,
+
+        message: {
+
+            error:
+                "Too many requests. Please try again shortly."
+
+        }
+
+    });
+
+
+const authLimiter =
+    rateLimit({
+
+        windowMs:
+            60 * 1000,
+
+        limit:
+            20,
+
+        standardHeaders:
+            "draft-8",
+
+        legacyHeaders:
+            false,
+
+        message: {
+
+            error:
+                "Too many authentication requests. Please try again shortly."
+
+        }
+
+    });
+
+
+// Apply API protection.
+
+app.use(
+    "/api",
+    apiLimiter
+);
+
+
+// Apply stricter protection to authentication routes.
+
+app.use(
+    "/auth",
+    authLimiter
+);
 
 
 // ======================================================
@@ -95,14 +266,43 @@ app.use(
 );
 
 
-app.use(
-    "/overlay-files",
-    express.static(
-        path.join(
-            __dirname,
-            "overlay"
-        )
-    )
+// ======================================================
+// Overlay browser files
+// ======================================================
+//
+// Only expose files that the OBS/browser overlay needs.
+// Server-side overlay.js must not be publicly accessible.
+//
+
+app.get(
+    "/overlay-files/overlay.css",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "overlay",
+                "overlay.css"
+            )
+        );
+
+    }
+);
+
+
+app.get(
+    "/overlay-files/overlayClient.js",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "overlay",
+                "overlayClient.js"
+            )
+        );
+
+    }
 );
 
 
@@ -125,6 +325,27 @@ app.use(
             "styles"
         )
     )
+);
+
+
+// ======================================================
+// Health check
+// ======================================================
+
+app.get(
+    "/health",
+    (req, res) => {
+
+        res
+            .status(200)
+            .json({
+
+                status:
+                    "ok"
+
+            });
+
+    }
 );
 
 
@@ -154,14 +375,6 @@ let stopTokenValidation =
 // ======================================================
 // Start Twitch integration
 // ======================================================
-//
-// Both:
-//
-// 1. A fresh Twitch OAuth login
-// 2. A restored saved Twitch session
-//
-// go through this function.
-//
 
 async function startTwitchIntegration(
     twitchSession
@@ -467,7 +680,7 @@ async function handleChatMessage(
 
 
         // ==============================================
-        // Build collection link
+        // Build private collection link
         // ==============================================
 
         const publicUrl =
@@ -478,7 +691,7 @@ async function handleChatMessage(
 
 
         const collectionUrl =
-            `${publicUrl}/collection/${encodeURIComponent(user.display_name)}`;
+            `${publicUrl}/collection/${encodeURIComponent(user.collection_token)}`;
 
 
         // ==============================================
@@ -532,7 +745,7 @@ app.get(
 // ======================================================
 
 app.get(
-    "/collection/:viewer",
+    "/collection/:token",
     (req, res) => {
 
         res.sendFile(
@@ -552,37 +765,19 @@ app.get(
 // ======================================================
 
 app.get(
-    "/api/collection/:viewer",
+    "/api/collection/:token",
     (req, res) => {
 
         try {
 
-            const viewer =
-                req.params.viewer;
+            const collectionToken =
+                req.params.token;
 
 
-            let user;
-
-
-            if (
-                /^\d+$/.test(
-                    viewer
-                )
-            ) {
-
-                user =
-                    getUserByTwitchId(
-                        viewer
-                    );
-
-            } else {
-
-                user =
-                    getUserByDisplayName(
-                        viewer
-                    );
-
-            }
+            const user =
+                getUserByCollectionToken(
+                    collectionToken
+                );
 
 
             if (!user) {
@@ -590,8 +785,10 @@ app.get(
                 return res
                     .status(404)
                     .json({
+
                         error:
                             "Collection not found."
+
                     });
 
             }
@@ -685,9 +882,6 @@ app.get(
 
                 user: {
 
-                    twitchUserId:
-                        user.twitch_user_id,
-
                     displayName:
                         user.display_name
 
@@ -721,8 +915,10 @@ app.get(
             res
                 .status(500)
                 .json({
+
                     error:
                         "Failed to load collection."
+
                 });
 
         }
@@ -764,10 +960,6 @@ async function restoreSavedTwitchSession() {
 
 
     try {
-
-        // validateTwitchSession() automatically tries
-        // the refresh token when the access token
-        // has expired.
 
         await validateTwitchSession(
             twitchSession
@@ -811,17 +1003,72 @@ async function restoreSavedTwitchSession() {
 
 
 // ======================================================
+// 404
+// ======================================================
+
+app.use(
+    (req, res) => {
+
+        res
+            .status(404)
+            .json({
+
+                error:
+                    "Not found."
+
+            });
+
+    }
+);
+
+
+// ======================================================
+// Express error handler
+// ======================================================
+
+app.use(
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
+
+        console.error(
+            "Unhandled Express error:",
+            error
+        );
+
+
+        if (res.headersSent) {
+
+            return next(
+                error
+            );
+
+        }
+
+
+        res
+            .status(500)
+            .json({
+
+                error:
+                    "Internal server error."
+
+            });
+
+    }
+);
+
+
+// ======================================================
 // Start EggGacha
 // ======================================================
 
 const PORT =
     config.server.port;
 
-
-// Restore Twitch BEFORE starting the HTTP server.
-//
-// If there is no saved session this simply continues
-// normally and the user can connect through the UI.
 
 await restoreSavedTwitchSession();
 
@@ -831,6 +1078,7 @@ server.listen(
     () => {
 
         console.log("");
+
         console.log(
             "========================================"
         );
@@ -853,6 +1101,10 @@ server.listen(
             `Overlay: http://localhost:${PORT}/overlay`
         );
 
+        console.log(
+            `Health: http://localhost:${PORT}/health`
+        );
+
         console.log("");
 
         console.log(
@@ -869,6 +1121,7 @@ server.listen(
 
         console.log("");
 
+
         if (eggRewardId) {
 
             console.log(
@@ -882,6 +1135,7 @@ server.listen(
             );
 
         }
+
 
         console.log("");
 
