@@ -13,8 +13,8 @@
     "vars": {
         "TWITCH_REDIRECT_URI": "https://egggacha.undyne.workers.dev/auth/twitch/callback",
         "PUBLIC_URL": "https://egggacha.undyne.workers.dev",
-        "EGG_REWARD_TITLE": "🥚 Hatch an Egg",
-        "EGG_REWARD_COST": "50"
+        "EGG_REWARD_TITLE": "Claim daily egg reward",
+        "EGG_REWARD_COST": "100",
     },
     "assets": {
         "directory": "./public",
