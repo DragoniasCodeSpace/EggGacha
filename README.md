@@ -13,7 +13,7 @@ When a viewer rolls an egg, the result is displayed on an OBS overlay and automa
 - 🎮 Twitch OAuth integration
 - 🟣 Automatic Twitch Channel Point reward creation and synchronization
 - 🥚 Weighted egg gacha system
-- 💾 Persistent viewer collections using SQLite
+- 💾 Persistent viewer collections using Cloudflare D1
 - 👤 Collections linked to Twitch users
 - 🔗 Private token-based collection links
 - 💬 `!eggs` and `!collection` Twitch chat commands
@@ -24,13 +24,13 @@ When a viewer rolls an egg, the result is displayed on an OBS overlay and automa
 - 🌈 Rarity-specific visual effects
 - ✨ Special animations for high-rarity eggs
 - 🔁 Duplicate egg tracking
-- ⚡ Twitch EventSub WebSocket integration
-- 🔄 Automatic EventSub reconnection
+- ⚡ Twitch EventSub Webhook integration
 - 🔑 Persistent Twitch OAuth sessions
 - 🔐 Encrypted Twitch tokens at rest
 - 🛡️ Protected OBS overlay WebSocket
-- 🚦 API and authentication rate limiting
-- 🔒 Content Security Policy and security headers
+- ☁️ Cloudflare Workers hosting
+- 🗄️ Cloudflare D1 database
+- 🔌 Cloudflare Durable Objects for the OBS WebSocket
 
 ---
 
@@ -54,7 +54,7 @@ Collection pages use a randomly generated private token rather than exposing the
 Example collection URL:
 
 ```text
-http://localhost:3000/collection/YOUR_PRIVATE_COLLECTION_TOKEN
+https://egggacha.undyne.workers.dev/collection/YOUR_PRIVATE_COLLECTION_TOKEN
 ```
 
 The collection is private-by-link. Anyone with the collection link can view it, so collection links should only be shared when intended.
@@ -165,12 +165,13 @@ EggGacha includes a browser-based overlay designed for OBS.
 
 When a viewer redeems the EggGacha Channel Point reward:
 
-1. Twitch sends the redemption through EventSub.
+1. Twitch sends the redemption to EggGacha through an EventSub Webhook.
 2. EggGacha rolls a rarity.
 3. An egg is selected from that rarity.
-4. The egg is added to the viewer's collection.
-5. The result is sent to the overlay through a WebSocket.
-6. The reveal animation plays in OBS.
+4. The egg is stored in the viewer's Cloudflare D1 collection.
+5. The result is sent to a Cloudflare Durable Object.
+6. The Durable Object broadcasts the result to connected OBS overlays through a WebSocket.
+7. The reveal animation plays in OBS.
 
 Higher-rarity eggs have increasingly dramatic reveal effects.
 
@@ -180,25 +181,70 @@ The overlay also shows whether the viewer discovered a new egg or received a dup
 
 ## OBS Setup
 
-The overlay is protected using the `OVERLAY_SECRET` configured in the environment.
+The OBS overlay is protected using an `OVERLAY_SECRET`.
 
-Start EggGacha and add a new **Browser Source** in OBS.
-
-For local development, use:
+The production overlay URL follows this format:
 
 ```text
-http://localhost:3000/overlay?key=YOUR_OVERLAY_SECRET
+https://egggacha.undyne.workers.dev/overlay?key=YOUR_OVERLAY_SECRET
 ```
 
-Replace `YOUR_OVERLAY_SECRET` with the secret stored in your `.env` file.
+Replace `YOUR_OVERLAY_SECRET` with the secret configured in Cloudflare.
 
 The overlay has a transparent background and is intended to be placed directly over the stream layout.
 
 ### Important
 
-Do not publicly share your overlay URL when it contains the real overlay secret.
+Do not publicly share the complete overlay URL when it contains the real overlay secret.
 
-The secret is used to authorize the WebSocket connection between the browser overlay and EggGacha.
+The secret is used to authorize access to both the overlay page and its WebSocket connection.
+
+---
+
+# ☁️ Architecture
+
+EggGacha runs primarily on Cloudflare's serverless infrastructure.
+
+```text
+Twitch
+   │
+   ▼
+EventSub Webhooks
+   │
+   ▼
+Cloudflare Worker
+   │
+   ├── Twitch OAuth
+   ├── Channel Point rewards
+   ├── Twitch chat commands
+   ├── Gacha processing
+   ├── Collection API
+   │
+   ├──────────────► Cloudflare D1
+   │
+   ▼
+Durable Object
+   │
+   ▼
+WebSocket
+   │
+   ▼
+OBS Overlay
+```
+
+The application uses:
+
+- **Cloudflare Workers** for the application backend
+- **Cloudflare D1** for persistent data
+- **Cloudflare Durable Objects** for the OBS WebSocket
+- **Cloudflare Static Assets** for the frontend
+- **Twitch Helix API** for Twitch integration
+- **Twitch EventSub Webhooks** for Channel Point redemptions and chat messages
+- **Wrangler** for development and deployment
+
+The gacha logic is kept separate from the Cloudflare and Twitch integrations.
+
+This allows the egg rolling system to remain independent of the hosting and Twitch infrastructure.
 
 ---
 
@@ -210,9 +256,12 @@ You will need:
 
 - Node.js
 - npm
+- A Cloudflare account
 - A Twitch account
 - A Twitch Developer application
 - OBS Studio if you want to use the stream overlay
+
+Node.js is used for local development tooling and Wrangler. The production application itself runs on Cloudflare Workers.
 
 ---
 
@@ -238,46 +287,107 @@ npm install
 
 ---
 
-## 3. Create your environment file
+## 3. Cloudflare authentication
 
-Create a file named:
+Authenticate Wrangler with your Cloudflare account:
+
+```bash
+npx wrangler login
+```
+
+You can verify the authenticated account with:
+
+```bash
+npx wrangler whoami
+```
+
+---
+
+## 4. Cloudflare D1
+
+EggGacha uses Cloudflare D1 for persistent application data.
+
+The D1 database is bound to the Worker as:
 
 ```text
-.env
+DB
 ```
 
-You can use `.env.example` as a template.
+Database migrations are stored in:
 
-```env
-TWITCH_CLIENT_ID=your_client_id
-TWITCH_CLIENT_SECRET=your_client_secret
-TWITCH_REDIRECT_URI=http://localhost:3000/auth/twitch/callback
-
-PORT=3000
-PUBLIC_URL=http://localhost:3000
-
-EGG_REWARD_TITLE=🥚 Roll an Egg
-EGG_REWARD_COST=100
-
-SESSION_ENCRYPTION_KEY=your_encryption_key
-OVERLAY_SECRET=your_overlay_secret
+```text
+migrations/
 ```
 
-Do **not** commit your `.env` file.
+Apply migrations to the remote database with:
+
+```bash
+npx wrangler d1 migrations apply egggacha --remote
+```
+
+---
+
+# 🔐 Secrets
+
+Sensitive configuration must not be committed to Git.
+
+EggGacha uses the following Cloudflare secrets:
+
+```text
+TWITCH_CLIENT_ID
+TWITCH_CLIENT_SECRET
+SESSION_ENCRYPTION_KEY
+OVERLAY_SECRET
+TWITCH_EVENTSUB_SECRET
+```
+
+Set a production secret using Wrangler:
+
+```bash
+npx wrangler secret put TWITCH_CLIENT_ID
+```
+
+Repeat this for each secret.
 
 Never publicly share:
 
 - `TWITCH_CLIENT_SECRET`
 - `SESSION_ENCRYPTION_KEY`
 - `OVERLAY_SECRET`
+- `TWITCH_EVENTSUB_SECRET`
 - Twitch access tokens
 - Twitch refresh tokens
 
 ---
 
-## 4. Generate a session encryption key
+## Local development secrets
 
-EggGacha encrypts stored Twitch access and refresh tokens using AES-256-GCM.
+For local Wrangler development, create:
+
+```text
+.dev.vars
+```
+
+You can use `.dev.vars.example` as a template.
+
+Example:
+
+```env
+TWITCH_CLIENT_ID=your_twitch_client_id
+TWITCH_CLIENT_SECRET=your_twitch_client_secret
+
+SESSION_ENCRYPTION_KEY=your_session_encryption_key
+OVERLAY_SECRET=your_overlay_secret
+TWITCH_EVENTSUB_SECRET=your_eventsub_secret
+```
+
+Do **not** commit `.dev.vars`.
+
+---
+
+## Generate a session encryption key
+
+EggGacha encrypts stored Twitch access and refresh tokens.
 
 Generate a random 32-byte key:
 
@@ -285,19 +395,19 @@ Generate a random 32-byte key:
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-Place the result in:
+Then configure it as:
 
-```env
-SESSION_ENCRYPTION_KEY=YOUR_GENERATED_KEY
+```text
+SESSION_ENCRYPTION_KEY
 ```
 
-The same key must be kept between application restarts.
+The same encryption key must be retained.
 
-If the key is lost or changed, existing encrypted Twitch sessions can no longer be decrypted and Twitch will need to be reconnected.
+If the key is lost or changed, previously encrypted Twitch sessions can no longer be decrypted and Twitch will need to be reconnected.
 
 ---
 
-## 5. Generate an overlay secret
+## Generate an overlay secret
 
 Generate a random overlay secret:
 
@@ -305,10 +415,30 @@ Generate a random overlay secret:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Place the result in:
+Configure it as:
 
-```env
-OVERLAY_SECRET=YOUR_GENERATED_SECRET
+```text
+OVERLAY_SECRET
+```
+
+Do not commit or publicly share this value.
+
+---
+
+## Generate an EventSub secret
+
+The EventSub secret is used to verify that incoming EventSub Webhook requests genuinely came from Twitch.
+
+Generate a random value:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Configure it as:
+
+```text
+TWITCH_EVENTSUB_SECRET
 ```
 
 Do not commit or publicly share this value.
@@ -319,29 +449,31 @@ Do not commit or publicly share this value.
 
 EggGacha requires a Twitch Developer application.
 
-For local development, configure the OAuth redirect URL as:
+The production OAuth callback is:
 
 ```text
-http://localhost:3000/auth/twitch/callback
+https://egggacha.undyne.workers.dev/auth/twitch/callback
 ```
 
-This URL must match the `TWITCH_REDIRECT_URI` configured in `.env`.
+This callback must be registered in the Twitch Developer application.
 
 EggGacha uses Twitch OAuth to connect the broadcaster account.
 
-The application requires permissions for:
+The application currently requests:
 
 ```text
 channel:manage:redemptions
 user:read:chat
 user:write:chat
+user:bot
+channel:bot
 ```
 
 These permissions allow EggGacha to:
 
 - Manage its Channel Point reward
 - Receive Channel Point redemptions
-- Read Twitch chat messages
+- Receive Twitch chat messages
 - Respond to collection commands in Twitch chat
 
 After authentication, EggGacha creates or locates its own:
@@ -352,68 +484,67 @@ After authentication, EggGacha creates or locates its own:
 
 Channel Point reward.
 
-The reward ID is stored by EggGacha so the application can continue managing the same reward even if its title or configuration changes.
+The reward ID is stored in D1 so the application can continue managing the same reward.
 
-EggGacha then listens for redemptions of that specific reward using Twitch EventSub.
+EggGacha then creates the required Twitch EventSub Webhook subscriptions.
 
 ---
 
-# ▶️ Running EggGacha
+# ▶️ Development
 
-Start the application with:
+Start the Cloudflare Worker locally using:
 
 ```bash
-npm start
+npm run dev
 ```
 
-Then open:
+This runs:
 
-```text
-http://localhost:3000
+```bash
+wrangler dev
 ```
 
-and authenticate with Twitch.
+Production deployments use:
 
-Once connected, EggGacha will:
+```bash
+npm run deploy
+```
 
-1. Restore an existing Twitch session when possible.
-2. Validate or refresh the OAuth session.
-3. Create or synchronize the EggGacha Channel Point reward.
-4. Connect to Twitch EventSub.
-5. Subscribe to reward redemptions and Twitch chat.
-6. Start listening for egg rolls and collection commands.
+which runs:
+
+```bash
+wrangler deploy
+```
 
 ---
 
 # 🔄 Twitch Sessions
 
-EggGacha stores the Twitch OAuth session in SQLite so the broadcaster does not need to reconnect every time the application restarts.
+EggGacha stores Twitch OAuth sessions in Cloudflare D1.
 
-Stored access and refresh tokens are encrypted using **AES-256-GCM** before being written to the database.
+Access and refresh tokens are encrypted before being written to the database.
 
-EggGacha can automatically refresh expired Twitch access tokens.
+EggGacha can automatically refresh expired Twitch access tokens and validate existing sessions.
 
-It also periodically validates the current session.
-
-If a Twitch API request returns an authentication failure, EggGacha can refresh the session and retry the request once.
+This allows the broadcaster connection to remain persistent without storing Twitch credentials in plain text.
 
 ---
 
-# ⚡ EventSub Reliability
+# ⚡ Twitch EventSub
 
-EggGacha uses Twitch EventSub over WebSockets.
+EggGacha uses **Twitch EventSub Webhooks** rather than maintaining a permanent outbound EventSub WebSocket connection.
 
-The EventSub connection includes:
+The Worker exposes an EventSub endpoint that:
 
-- Twitch-requested WebSocket reconnection handling
-- Keepalive monitoring
-- Automatic recovery from lost connections
-- Retry backoff for failed connections
-- Automatic subscription creation for new EventSub sessions
+- Verifies Twitch HMAC signatures
+- Verifies message timestamps
+- Handles Twitch verification challenges
+- Handles subscription revocations
+- Rejects duplicate EventSub messages
+- Processes Channel Point redemptions
+- Processes Twitch chat messages
 
-If the internet connection is temporarily lost, EggGacha will attempt to reconnect automatically.
-
-Reconnect attempts gradually back off to avoid repeatedly hammering Twitch while the connection is unavailable.
+Processed EventSub message IDs are stored so Twitch retries do not result in duplicate processing.
 
 ---
 
@@ -441,7 +572,7 @@ The Twitch user ID itself is not exposed in the collection URL.
 
 # 💾 Collections
 
-Viewer collections are stored locally using SQLite.
+Viewer collections are stored using **Cloudflare D1**.
 
 EggGacha stores information including:
 
@@ -468,17 +599,7 @@ rather than:
 /collection/TWITCH_USER_ID
 ```
 
-The SQLite database is intentionally excluded from Git:
-
-```gitignore
-egggacha.db
-egggacha.db-shm
-egggacha.db-wal
-```
-
-This prevents local viewer collection data and Twitch session data from being committed to the repository.
-
-For production hosting, the SQLite database must be stored on persistent storage so collections survive application restarts and deployments.
+This prevents collections from being trivially discovered from Twitch usernames or user IDs.
 
 ---
 
@@ -486,61 +607,72 @@ For production hosting, the SQLite database must be stored on persistent storage
 
 ```text
 EggGacha/
-├── public/
-│   └── assets/
-│       └── eggs/
-│           └── ...
+├── migrations/
+│   ├── 0001_initial.sql
+│   ├── 0002_oauth_states.sql
+│   └── 0003_eventsub_messages.sql
 │
-├── src/
-│   ├── auth/
+├── public/
+│   ├── assets/
+│   │   └── eggs/
+│   │       └── ...
+│   │
+│   ├── auth-files/
 │   │   ├── login.html
 │   │   ├── login.css
 │   │   └── login.js
 │   │
-│   ├── collection/
+│   ├── collection-files/
 │   │   ├── collection.html
 │   │   ├── collection.css
 │   │   └── collection.js
 │   │
-│   ├── config/
-│   │   ├── config.js
-│   │   └── validateConfig.js
-│   │
-│   ├── database/
-│   │   ├── database.js
-│   │   ├── users.js
-│   │   ├── collections.js
-│   │   └── twitchRewards.js
-│   │
-│   ├── gacha/
-│   │   ├── eggs.js
-│   │   ├── rarities.js
-│   │   └── rollEgg.js
-│   │
-│   ├── overlay/
+│   ├── overlay-files/
 │   │   ├── overlay.html
 │   │   ├── overlay.css
-│   │   ├── overlay.js
 │   │   └── overlayClient.js
 │   │
-│   ├── security/
-│   │   └── encryption.js
-│   │
-│   ├── styles/
-│   │   └── theme.css
-│   │
-│   ├── twitch/
-│   │   ├── api.js
-│   │   ├── auth.js
-│   │   ├── chat.js
-│   │   ├── eventSub.js
-│   │   └── session.js
-│   │
-│   └── index.js
+│   └── styles/
+│       └── theme.css
 │
-├── .env.example
+├── src/
+│   ├── cloudflare/
+│   │   ├── database/
+│   │   │   ├── collections.js
+│   │   │   ├── eventSubMessages.js
+│   │   │   ├── oauthStates.js
+│   │   │   ├── twitchRewards.js
+│   │   │   ├── twitchSessions.js
+│   │   │   └── users.js
+│   │   │
+│   │   ├── overlay/
+│   │   │   └── OverlayDurableObject.js
+│   │   │
+│   │   ├── security/
+│   │   │   └── encryption.js
+│   │   │
+│   │   ├── twitch/
+│   │   │   ├── api.js
+│   │   │   ├── auth.js
+│   │   │   ├── chat.js
+│   │   │   ├── eventSubSubscriptions.js
+│   │   │   ├── eventSubWebhook.js
+│   │   │   ├── redemptions.js
+│   │   │   ├── rewards.js
+│   │   │   └── session.js
+│   │   │
+│   │   └── worker.js
+│   │
+│   └── gacha/
+│       ├── eggs.js
+│       ├── rarities.js
+│       └── rollEgg.js
+│
+├── .dev.vars.example
 ├── .gitignore
 ├── package.json
+├── package-lock.json
+├── wrangler.jsonc
 └── README.md
 ```
 
@@ -548,29 +680,37 @@ EggGacha/
 
 # ⚙️ How It Works
 
-The main EggGacha flow is:
+The main EggGacha redemption flow is:
 
 ```text
-Twitch
+Viewer
    │
    ▼
 Channel Point Redemption
    │
    ▼
-Twitch EventSub
+Twitch EventSub Webhook
    │
    ▼
-EggGacha
+Cloudflare Worker
    │
-   ├── Roll Rarity
+   ├── Verify EventSub request
+   │
+   ├── Verify EggGacha reward
+   │
+   ▼
+Roll Rarity
    │
    ▼
 Select Egg
    │
-   ├──────────────► SQLite Collection
+   ├──────────────► Cloudflare D1 Collection
    │
    ▼
-Overlay WebSocket
+Durable Object
+   │
+   ▼
+WebSocket
    │
    ▼
 OBS Egg Reveal
@@ -578,7 +718,7 @@ OBS Egg Reveal
 
 The gacha system itself is kept separate from the Twitch integration.
 
-This means the egg rolling logic is not dependent on Twitch and can potentially be reused by other parts of the application in the future.
+The egg rolling logic can therefore be used without depending directly on Twitch or Cloudflare.
 
 ---
 
@@ -588,19 +728,25 @@ EggGacha includes several security measures intended to protect the Twitch integ
 
 ### OAuth State Protection
 
-Twitch OAuth requests use temporary, single-use state values to help protect the OAuth flow.
+Twitch OAuth requests use temporary, single-use state values.
 
 OAuth states expire after a limited period and cannot be reused after a successful callback.
 
 ### Token Encryption
 
-Twitch access and refresh tokens stored in SQLite are encrypted using AES-256-GCM.
+Twitch access and refresh tokens stored in D1 are encrypted before storage.
 
-The encryption key is stored separately in the environment.
+The encryption key is stored separately as a Cloudflare secret.
+
+### EventSub Verification
+
+Incoming Twitch EventSub requests are cryptographically verified using Twitch's HMAC signature.
+
+Duplicate EventSub message IDs are tracked to prevent Twitch retries from processing the same event more than once.
 
 ### Private Collection Tokens
 
-Public collection URLs use randomly generated tokens rather than Twitch user IDs.
+Collection URLs use randomly generated tokens rather than Twitch user IDs.
 
 This prevents collection pages from being easily discovered simply by knowing someone's Twitch ID or username.
 
@@ -608,21 +754,9 @@ These links are private-by-link rather than authenticated.
 
 ### Protected Overlay
 
-The OBS overlay WebSocket requires the configured `OVERLAY_SECRET`.
+The OBS overlay and WebSocket require the configured `OVERLAY_SECRET`.
 
 Connections without the correct secret are rejected.
-
-### HTTP Security
-
-EggGacha uses security measures including:
-
-- Helmet security headers
-- Content Security Policy
-- API rate limiting
-- Authentication rate limiting
-- Limited request body sizes
-- Restricted static file exposure
-- Disabled `X-Powered-By` header
 
 ### Secrets
 
@@ -632,16 +766,14 @@ Never commit or publicly share:
 TWITCH_CLIENT_SECRET
 SESSION_ENCRYPTION_KEY
 OVERLAY_SECRET
+TWITCH_EVENTSUB_SECRET
 Twitch access tokens
 Twitch refresh tokens
+.dev.vars
 .env
 ```
 
-The repository's `.gitignore` should keep the local `.env` file and SQLite database out of Git.
-
-If a Twitch Client Secret is accidentally committed, revoke and rotate it through Twitch rather than simply deleting it from the latest commit.
-
-The same principle applies to other secrets that may have been exposed through Git history.
+If a secret is accidentally committed, rotate it rather than simply deleting it from the latest commit because it may remain in Git history.
 
 ---
 
@@ -659,6 +791,7 @@ Development and implementation of the EggGacha application, including:
 - Twitch EventSub
 - Twitch chat integration
 - Gacha system
+- Cloudflare infrastructure
 - Database and persistent collections
 - Collection interface
 - OBS overlay
@@ -707,18 +840,19 @@ Please do not reuse, redistribute, modify, sell, or otherwise use the egg artwor
 
 ---
 
-# 📦 Dependencies
+# 📦 Infrastructure & Dependencies
 
 EggGacha currently uses:
 
-- Express
-- ws
-- better-sqlite3
-- dotenv
-- helmet
-- express-rate-limit
+- Cloudflare Workers
+- Cloudflare D1
+- Cloudflare Durable Objects
+- Cloudflare Static Assets
+- Wrangler
+- Twitch Helix API
+- Twitch EventSub Webhooks
 
-These libraries remain subject to their respective licenses.
+Wrangler is installed as a development dependency through npm.
 
 ---
 
@@ -732,10 +866,10 @@ Current functionality includes:
 - Persistent encrypted Twitch sessions
 - Automatic Twitch token refresh
 - Automatic EggGacha reward creation and synchronization
-- Channel Point redemption detection
+- Channel Point redemption detection through EventSub Webhooks
 - Twitch chat collection commands
 - Weighted rarity rolls
-- Persistent viewer collections
+- Persistent Cloudflare D1 viewer collections
 - Private collection tokens
 - Duplicate tracking
 - Collection pages
@@ -744,9 +878,9 @@ Current functionality includes:
 - OBS egg reveal overlay
 - Protected overlay WebSocket
 - Rarity-specific reveal effects
-- Automatic EventSub reconnection
-- EventSub keepalive monitoring
-- HTTP security headers and rate limiting
+- EventSub HMAC verification
+- Duplicate EventSub protection
+- Cloudflare Worker deployment
 
 Additional functionality may be added as the project develops.
 
@@ -754,21 +888,24 @@ Additional functionality may be added as the project develops.
 
 # 🌐 Hosting
 
-EggGacha is currently designed to run locally during development.
+EggGacha is hosted using Cloudflare.
 
-Production hosting requires:
+The production Worker is available at:
 
-- A continuously running Node.js environment
-- Persistent storage for the SQLite database
+```text
+https://egggacha.undyne.workers.dev
+```
+
+Cloudflare provides:
+
+- Serverless Worker execution
+- Persistent D1 database storage
+- Durable Object WebSocket handling
+- Static asset hosting
 - HTTPS
-- A public URL
-- A matching Twitch OAuth redirect URL
-- Secure environment variable storage
-- WebSocket support
+- Secure secret storage
 
-When deployed, `PUBLIC_URL` and `TWITCH_REDIRECT_URI` should be changed from their localhost values to the production HTTPS address.
-
-The SQLite database must remain on persistent storage so viewer collections, Twitch sessions, and saved reward information survive application restarts.
+The application therefore does not require a continuously running local Node.js server.
 
 ---
 
