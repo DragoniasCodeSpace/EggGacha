@@ -1,6 +1,4 @@
+.dev.vars
 .env
 node_modules/
-
-egggacha.db
-egggacha.db-shm
-egggacha.db-wal
+.wrangler/

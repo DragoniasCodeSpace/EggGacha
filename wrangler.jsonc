@@ -1,0 +1,40 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "egggacha",
+    "main": "src/cloudflare/worker.js",
+    "compatibility_date": "2026-09-05",
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "egggacha",
+            "database_id": "13dbc3cf-ee5d-4174-bbdd-652f3a77db00"
+        }
+    ],
+    "vars": {
+        "TWITCH_REDIRECT_URI": "https://egggacha.undyne.workers.dev/auth/twitch/callback",
+        "PUBLIC_URL": "https://egggacha.undyne.workers.dev",
+        "EGG_REWARD_TITLE": "Claim daily egg reward",
+        "EGG_REWARD_COST": "100",
+    },
+    "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "html_handling": "none"
+    },
+    "durable_objects": {
+        "bindings": [
+            {
+                "name": "OVERLAY",
+                "class_name": "OverlayDurableObject"
+            }
+        ]
+    },
+    "migrations": [
+        {
+            "tag": "v1",
+            "new_sqlite_classes": [
+                "OverlayDurableObject"
+            ]
+        }
+    ],
+}
