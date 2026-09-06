@@ -25,6 +25,11 @@
     "ws": "^8.21.3"
   },
   "allowScripts": {
-    "better-sqlite3@13.0.3": true
+    "better-sqlite3@13.0.3": true,
+    "esbuild@0.28.1": true,
+    "workerd@1.20260903.1": true
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
   }
 }
